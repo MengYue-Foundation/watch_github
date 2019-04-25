@@ -31,6 +31,7 @@ TARGET := show_file
 obj-y += screen/
 obj-y += Fonts/
 obj-y += key/
+obj-y += main.o
 
 
 all : 
