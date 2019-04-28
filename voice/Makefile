@@ -1,0 +1,9 @@
+obj-y += cJSON.o
+obj-y += asr.o
+#obj-y += serial_watch.o
+#obj-y += tts.o
+#obj-y += watch_aiworld_client.o
+#obj-y += watch_ehome.o
+#obj-y += watch_mesg.o
+#obj-y += watch_serial.o
+obj-y += weather.o

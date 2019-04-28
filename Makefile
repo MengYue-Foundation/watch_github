@@ -15,9 +15,9 @@ export AS LD CC CPP AR NM
 export STRIP OBJCOPY OBJDUMP
 
 CFLAGS := -Wall -O2 -g
-CFLAGS += -I $(shell pwd)/include  -I $(shell pwd)/screen -I $(shell pwd)/Fonts  -I $(shell pwd)/key/
+CFLAGS += -I $(shell pwd)/include  -I $(shell pwd)/screen -I $(shell pwd)/Fonts  -I $(shell pwd)/key/ -I $(shell pwd)/time -I $(shell pwd)/watch
 
-LDFLAGS := -lm -lwiringPi -lpthread
+LDFLAGS := -lm -lwiringPi -lpthread -lcurl -lcrypto
 
 export CFLAGS LDFLAGS
 
@@ -31,6 +31,9 @@ TARGET := show_file
 obj-y += screen/
 obj-y += Fonts/
 obj-y += key/
+obj-y += time/
+obj-y += watch/
+obj-y += voice/
 obj-y += main.o
 
 
