@@ -1,20 +1,15 @@
+#ifndef __WATCH_MESG_H__
+#define __WATCH_MESG_H__
+
+
 #include <stdio.h>
 #include <string.h>
-#include <errno.h>      /*错误号定义*/
+#include <errno.h>  
 #include <stdbool.h>
 #include <iconv.h>
 
 
-#ifdef __cplusplus
 
-extern "C"{
-
-#endif
-
-    int watch_mesg_SendMesg(char *pcTelNumber,char *pcText,char *pcOutText,char *pcTextLen);
-
-#ifdef __cplusplus
-
-};
+int watch_mesg_SendMesg(char *pcTelNumber,char *pcText,char *pcOutText,char *pcTextLen);
 
 #endif

@@ -1,22 +1,17 @@
 #ifndef __SERIAL_WATCH__H
-#define  __SERIAL_WATCH__H
+#define __SERIAL_WATCH__H
 
-#include     <stdio.h>      /*标准输入输出定义*/
-#include     <stdlib.h>     /*标准函数库定义*/
-#include     <unistd.h>     /*Unix 标准函数定义*/
+#include     <stdio.h>     
+#include     <stdlib.h>    
+#include     <unistd.h>     
 #include     <sys/types.h>
 #include     <sys/stat.h>
-#include     <fcntl.h>      /*文件控制定义*/
-#include     <termios.h>    /*PPSIX 终端控制定义*/
-#include     <errno.h>      /*错误号定义*/
+#include     <fcntl.h>     
+#include     <termios.h>    
+#include     <errno.h>      
 #include <string.h>
 #include "watch_mesg.h"
 
-#ifdef __cplusplus
-
-extern "C"{
-
-#endif
 
 
 #define WATCH_FALSE  0
@@ -32,13 +27,8 @@ typedef struct serial_watch {
     int read_thread_ready_flag;
 }serial_watch_t;
 
-extern int serial_message_watch_api(char *pcPhoneNum, char *pcMessage);
-extern int serial_phone_watch_api(char *pcMessage);
+int serial_message_watch_api(char *pcPhoneNum, char *pcMessage);
+int serial_phone_watch_api(char *pcMessage);
 
-#endif
-
-#ifdef __cplusplus
-
-};
 
 #endif

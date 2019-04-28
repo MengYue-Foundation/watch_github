@@ -5,7 +5,8 @@
 #include "../voice/asr.h"
 #include "../voice/weather.h"
 #include "../time/watch_time.h"
-#include "../screen/screen.h"
+#include "../screen/screen.h"
+#include "../phone/phone.h"
 
 
 typedef struct watch{
