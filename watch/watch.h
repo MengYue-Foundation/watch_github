@@ -7,11 +7,13 @@
 #include "../time/watch_time.h"
 #include "../screen/screen.h"
 #include "../phone/phone.h"
+#include "../message/message.h"
 
 
 typedef struct watch{
 	int iId;
-	char cszIp[32];	
+	char cszIp[32];
+	watch_mesg_t stWatchMesg;
 }watch_t;
 
 int watch_init(watch_t *pstWatch);
