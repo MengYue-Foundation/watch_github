@@ -40,7 +40,7 @@ typedef struct queue_info {
 }queue_info_t;
 
 
-extern int enqueue_display(display_info_t *p_display_info, int iPriority);
+extern int enqueue_display(int iX, int iY, int iRefresh_mode, char *path_or_text,	int iPriority, int iDisplay_type);
 extern int display_module_init(void);
 extern UBYTE *BlackImage;
 

@@ -229,12 +229,20 @@ int display_module_init(void)
 
 
 
-int enqueue_display(display_info_t *p_display_info, int iPriority)
+int enqueue_display(int iX, int iY, int iRefresh_mode, char *path_or_text,  int iPriority, int iDisplay_type)
 {
 	int iRet = 0;
 	
+	display_info_t st_display_info;
+	memset(&st_display_info, 0, sizeof(st_display_info));
+	display_info_t *p_display_info = &st_display_info;
 
-	
+	st_display_info.iDisplay_type = iDisplay_type;
+	st_display_info.iRefresh_Mode = iRefresh_mode;
+	st_display_info.i_x_coordinate = iX;
+	st_display_info.i_y_coordinate = iY;
+	sprintf(st_display_info.szPath_text, "%s", path_or_text);
+	st_display_info.szPath_text[strlen(path_or_text) + 1] = '\0';
 	if (p_display_info == NULL) {
 		printf("errno p_display_info, you should pass a valid p_display_info\n");
 		return -1;
@@ -388,11 +396,11 @@ printf("iRefresh_Mode:%d, p_display_info[0].szPath_text:%s\n", iCur_Refresh_mode
 			char *p_text_path = p_display_info[0].szPath_text;
 			printf("iContent:%d, p_text_path:%s\n", iContent, p_text_path);
 			if (TEXT_ENGLISH == iContent) {
-				Paint_DrawString_EN(iX , iY, p_text_path, &Font16, BLACK, WHITE);
+				Paint_DrawString_EN(iX , iY, p_text_path, &Font16, WHITE, BLACK);
 			} else if (PICTURE == iContent) {
 				GUI_ReadBmp(p_text_path, iX, iY);
 			} else if (TEXT_CHINESE == iContent) {
-				Paint_DrawString_CN(iX , iY, p_text_path, &Font16, BLACK, WHITE);
+				Paint_DrawString_CN(iX , iY, p_text_path, &Font12CN, WHITE, BLACK);
 			}
 			
 		}
@@ -405,11 +413,11 @@ printf("iRefresh_Mode:%d, p_display_info[0].szPath_text:%s\n", iCur_Refresh_mode
 				int iY = p_display_info[i].i_y_coordinate;
 				char *p_text_path = p_display_info[i].szPath_text;
 				if (TEXT_ENGLISH == iContent) {
-					Paint_DrawString_EN(iX , iY, p_text_path, &Font16, BLACK, WHITE);
+					Paint_DrawString_EN(iX , iY, p_text_path, &Font16, WHITE, BLACK);
 				} else if (PICTURE == iContent) {
 					GUI_ReadBmp(p_text_path, iX, iY);
 				} else if (TEXT_CHINESE == iContent) {
-					Paint_DrawString_CN(iX , iY, p_text_path, &Font16, BLACK, WHITE);
+					Paint_DrawString_CN(iX , iY, p_text_path, &Font12CN, WHITE, BLACK);
 				}
 				i++;
 			}
