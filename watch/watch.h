@@ -5,10 +5,10 @@
 #include "../voice/asr.h"
 #include "../voice/weather.h"
 #include "../time/watch_time.h"
-#include "../screen/screen.h"
+#include "../screen/screen.h"
 #include "../phone/phone.h"
 #include "../message/message.h"
-
+#include <ink_screen_display.h>
 
 typedef struct watch{
 	int iId;

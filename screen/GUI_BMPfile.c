@@ -96,12 +96,17 @@ UBYTE GUI_ReadBmp(const char *path, UWORD Xstart, UWORD Ystart)
     
     // Read image data into the cache
     UWORD x, y;
-    UBYTE Rdata; 
+    UBYTE Rdata;
+	printf("bmpFileHeader.bOffset:%d\n", bmpFileHeader.bOffset);
+	bmpFileHeader.bOffset = 62;
     fseek(fp, bmpFileHeader.bOffset, SEEK_SET);
+	int iNum = 0;
     for(y = 0; y < bmpInfoHeader.biHeight; y++) {//Total display column
         for(x = 0; x < Bmp_Width_Byte; x++) {//Show a line in the line
-            if(fread((char *)&Rdata, 1, readbyte, fp) != readbyte) {
-                perror("get bmpdata:\r\n");
+        	iNum = fread((char *)&Rdata, 1, readbyte, fp);
+			//printf("y:%d, x:%d, iNum:%d\n", y, x, iNum);
+            if(iNum != readbyte) {
+                perror("get bmpdata:\r");
                 break;
             }
             if(x < Image_Width_Byte) { //bmp
