@@ -76,13 +76,14 @@ typedef struct per_key_data_record {
 
 /*è¦æ³¨å†Œçš„dataæ˜¯åŒ…æ‹¬ è¦æ³¨å†Œçš„funcçš„,å¯èƒ½è¿˜ä¼šæœ‰åˆ«çš„ä¸œè¥¿éœ€è¦æ³¨å†Œ*/
 typedef struct key_need_reg_data {
-    bool is_reg[KEY_SYS_REG_FUNC_MAX];       /* æ³¨å†Œçš„å‡½æ•°æ˜¯æœ‰æ•ˆçš„è¿˜æ˜¯æ— æ•ˆçš„ */
+    bool is_reg[KEY_SYS_REG_FUNC_MAX];       
     key_func_callback_t * p_key_reg_data[KEY_SYS_REG_FUNC_MAX]; //æ³¨å†Œçš„å‡½æ•°
     void *p_szParameter[KEY_SYS_REG_FUNC_MAX];
 }key_need_reg_data_t;
 
 typedef struct key_data_need_transfer {
-    int iCurrent_key_index;//å“ªä¸€ä¸ªæŒ‰é”®æŒ‰ä¸‹
+	int iNeed_process;//ÓÃÀ´Çø·ÖÊÇ²»ÊÇ³¬Ê±»¹ÊÇÕæµÄÓĞÊı¾İÒª´¦Àí
+    int iCurrent_key_index;//µ±Ç°ÕıÔÚ´¦ÀíµÄ°´¼ü±àºÅ¡£
     per_key_data_record_t sz_per_key_data[KEY_NUM];
     
 }key_data_need_transfer_t;

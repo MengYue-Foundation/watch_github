@@ -59,9 +59,8 @@ int which_key_press(int iFd, key_read_i2c_data_t *key_read_i2c_data)
     int per = 0;
 	iData &= 0xffff;
 
-    /*è¿™ä¸ªåœ°æ–¹æ˜¯æ£€æµ‹æŒ‰é”®æ˜¯å¦å‘ç”Ÿå˜åŒ–çš„é€šçŸ¥*/
     iPrev_status = iNow_status;
-    iNow_status = 0x0;//è¡¨ç¤ºæ²¡æœ‰æŒ‰é”®æŒ‰ä¸‹
+    iNow_status = 0x0;
 	switch(iData)
 	{	
 		case 0x0001:printf("KEY7 PRESS\r\n");break;
@@ -115,7 +114,13 @@ int which_key_press(int iFd, key_read_i2c_data_t *key_read_i2c_data)
             iKey_status = UP;
             if (iPrev_status & 0x1) {
                 key_index = KEY0;
-            }
+            } else if (iPrev_status & 0x2) {
+                key_index = KEY1;
+			} else if (iPrev_status & 0x4) {
+                key_index = KEY2;
+			} else if (iPrev_status & 0x8) {
+                key_index = KEY3;
+			}
             break;	
 	}	
 
@@ -128,7 +133,7 @@ int which_key_press(int iFd, key_read_i2c_data_t *key_read_i2c_data)
     key_read_i2c_data->iKey_index = key_index;
     key_read_i2c_data->iPress_Status = iKey_status;
     key_read_i2c_data->iStatus_change = iStatus_change;
-    //printf("iStatus_changeï¼?d, iPrev_status:0x%x, iNow_status:0x%x, iData:0x%x\n", iStatus_change, iPrev_status, iNow_status, iData);
+    //printf("iStatus_change:%d, iPrev_status:0x%x, iNow_status:0x%x, iData:0x%x, key_index:0x%x\n", iStatus_change, iPrev_status, iNow_status, iData, key_index);
 
     return 0;
 }
@@ -143,13 +148,14 @@ void * key_data_is_change_thread (void *p_arg)
         printf("key_init failed!\n");
     }
     while (1) {
-        which_key_press(iRet, &key_read_i2c_data);
+        which_key_press(iRet, &key_read_i2c_data);		
         iKey_index = key_read_i2c_data.iKey_index;
         if (iKey_index >= KEY0 && iKey_index <= KEY3 && key_read_i2c_data.iStatus_change == YES) {
             pthread_mutex_lock(&key_data_status_change_mutex);
             p_key_data->sz_per_key_data[iKey_index].iPress_Status = key_read_i2c_data.iPress_Status;
-            p_key_data->iCurrent_key_index = key_read_i2c_data.iKey_index;
-            //printf("key status changed!\n");
+            p_key_data->iCurrent_key_index = iKey_index;
+			p_key_data->iNeed_process = true;
+            //printf("key status changed!, &p_key_data->iCurrent_key_index:0x%x, iPress_Status:%d, p_key_data:0x%x\n", &p_key_data->iCurrent_key_index, key_read_i2c_data.iPress_Status, p_key_data);
             pthread_cond_signal(&key_data_status_change_cond);
             pthread_mutex_unlock(&key_data_status_change_mutex);
         }
@@ -163,62 +169,61 @@ void * handle_key_data_thread (void *p_arg)
 {
     int iTime_cnt = 0;
     struct timespec outtime;
-    int iKey_have_pressed = UP;//ç”¨æ¥æ ‡è®°ä¹‹å‰æ˜¯æœ‰æŒ‰ä¸‹çš„åŠ¨ä½œå‘ç”Ÿçš„
+    int iKey_have_pressed = UP;
     pthread_t tid_first_down;
     pthread_t tid_short_press;
     pthread_t tid_long_press;
     pthread_t tid_press_up;
-    key_data_need_transfer_t *p_key_data = (key_data_need_transfer_t*)(p_arg);
+	
+	key_data_need_transfer_t *p_key_data = (key_data_need_transfer_t*)(p_arg);
     while (1) {
         
+		//printf("p_key_data->iCurrent_key_index:0x%x, p_key_data:0x%x\n", p_key_data->iCurrent_key_index, p_key_data);
         clock_gettime(CLOCK_REALTIME, &outtime);
         outtime.tv_nsec = outtime.tv_nsec + PER_INC_TIME_NS;
         //outtime.tv_sec = outtime.tv_sec + 2;
         pthread_mutex_lock(&key_data_status_change_mutex);
-        pthread_cond_timedwait(&key_data_status_change_cond, &key_data_status_change_mutex, &outtime);//è¶…æ—¶å‡½æ•°
+        pthread_cond_timedwait(&key_data_status_change_cond, &key_data_status_change_mutex, &outtime);
         pthread_mutex_unlock(&key_data_status_change_mutex);
 
         int i = 0;
         
-        pthread_mutex_lock(&key_data_status_change_mutex);        
-        int iCurrent_handle_key_index = p_key_data->iCurrent_key_index;
-        //printf("iTime_cnt:%d\n", iTime_cnt);
-        int iCurrent_key_status = p_key_data->sz_per_key_data[iCurrent_handle_key_index].iPress_Status;
-        if (iCurrent_key_status == DOWN && iTime_cnt < LONG_PRESS_TIME) {//ç¬¬ä¸€æ¬¡è¿›å…¥è¿™ä¸ªå‡½æ•°
-            /*åˆšæŒ‰ä¸‹çš„æ—¶å€™åº”è¯¥è°ƒç”¨æ³¨å†Œçš„å›è°ƒå‡½æ•°*/
-            if (0 == iTime_cnt) {
-                
-                iKey_have_pressed = DOWN;
-                /*
-                    å¦‚æœæ˜¯æ³¨å†Œäº†å›è°ƒå‡½æ•°å°±è°ƒç”¨
-                */
-                check_key_call_back(iCurrent_handle_key_index, FIRST_PRESS_DOWN);
-            }
-            iTime_cnt++;
-        } else if (iCurrent_key_status == DOWN && iTime_cnt == LONG_PRESS_TIME) {//åˆ¤æ–­æ˜¯ä¸æ˜¯é•¿æŒ‰
-            iTime_cnt++;
-            check_key_call_back(iCurrent_handle_key_index, LONG_PRESS);
-        }
-
-        /*
-            å¦‚æœæ˜¯æŠ¬èµ·çš„è¯ï¼Œåº”è¯¥åªè¿›ä¸€æ¬¡çš„
-        */       
-        if (iCurrent_key_status == UP && iKey_have_pressed == DOWN) {
-            int iRet = 0;
-            iKey_have_pressed = UP;
-            //printf("we should call  UP function\n");
-            
-            check_key_call_back(iCurrent_handle_key_index, PRESS_UP);
-
-            /*åˆ¤æ–­æ˜¯çŸ­æŒ‰çš„æŠ¬èµ·è¿˜æ˜¯é•¿æŒ‰çš„æŠ¬èµ·*/
-            if (iTime_cnt < LONG_PRESS_TIME) {
-                check_key_call_back(iCurrent_handle_key_index, SHORT_PRESS);
-            } 
-
-            
-            iTime_cnt = 0;
-
-        }
+        pthread_mutex_lock(&key_data_status_change_mutex);
+		
+		/*µ±Ç°ÕıÔÚ´¦ÀíµÄ°´¼üÊÇÄÄÒ»¸ö, ¶øÇÒĞèÒªÅÅ³ıÒòÎª³¬Ê±µÄ¶ÁÈ¡Á÷³Ì£¬Õâ¸öÊ±ºòÃ»ÓĞÊı¾İĞèÒª´¦Àí*/
+		if (true == p_key_data->iNeed_process) {
+			
+			int iCurrent_handle_key_index = p_key_data->iCurrent_key_index;
+			//printf("iTime_cnt:%d\n", iTime_cnt);
+			int iCurrent_key_status = p_key_data->sz_per_key_data[iCurrent_handle_key_index].iPress_Status;
+			if (iCurrent_key_status == DOWN && iTime_cnt < LONG_PRESS_TIME) {
+				if (0 == iTime_cnt) {
+					
+					iKey_have_pressed = DOWN;
+					check_key_call_back(iCurrent_handle_key_index, FIRST_PRESS_DOWN);
+				}
+				iTime_cnt++;
+			} else if (iCurrent_key_status == DOWN && iTime_cnt == LONG_PRESS_TIME) {
+				iTime_cnt++;
+				check_key_call_back(iCurrent_handle_key_index, LONG_PRESS);
+			}
+			
+			if (iCurrent_key_status == UP && iKey_have_pressed == DOWN) {
+				int iRet = 0;
+				iKey_have_pressed = UP;
+				//printf("we should call	UP function, iCurrent_handle_key_index:%d, &p_key_data->iCurrent_key_index:0x%x, p_key_data:0x%x\n", iCurrent_handle_key_index, &p_key_data->iCurrent_key_index, p_key_data);
+				
+				check_key_call_back(iCurrent_handle_key_index, PRESS_UP);
+			
+				if (iTime_cnt < LONG_PRESS_TIME) {
+					check_key_call_back(iCurrent_handle_key_index, SHORT_PRESS);
+				} 
+				/*°´¼üÌ§ÆğµÄÊ±ºò£¬ËµÃ÷Êı¾İÒÑ¾­´¦ÀíÍê±ÏÁË£¬±êÖ¾Î»Çå¿Õ*/
+				p_key_data->iNeed_process = false;
+				iTime_cnt = 0;
+			
+			}
+		}
 
         pthread_mutex_unlock(&key_data_status_change_mutex);
         
@@ -234,16 +239,17 @@ int key_module_init()
     int iRet = 0;
     pthread_t tid_detect_key_is_change;
     pthread_t tid_handle_key_data;
-    key_data_need_transfer_t st_Key_data_need_transfer;
-    memset(&st_Key_data_need_transfer, 0, sizeof(st_Key_data_need_transfer));
+    key_data_need_transfer_t *p_st_Key_data_need_transfer;
+	p_st_Key_data_need_transfer = (key_data_need_transfer_t *)malloc(sizeof(key_data_need_transfer_t));
+    memset(p_st_Key_data_need_transfer, 0, sizeof(key_data_need_transfer_t));
     memset(&key_need_reg_data_cb, 0, sizeof(key_need_reg_data_cb));
 
-    iRet = pthread_create(&tid_detect_key_is_change,NULL, key_data_is_change_thread, (void *)&st_Key_data_need_transfer);
+    iRet = pthread_create(&tid_detect_key_is_change,NULL, key_data_is_change_thread, (void *)p_st_Key_data_need_transfer);
     if (iRet != 0) {
         printf("create key_data_is_change_thread failed!\n");
     }
 
-    iRet = pthread_create(&tid_handle_key_data,NULL, handle_key_data_thread, (void *)&st_Key_data_need_transfer);
+    iRet = pthread_create(&tid_handle_key_data,NULL, handle_key_data_thread, (void *)p_st_Key_data_need_transfer);
     if (iRet != 0) {
         printf("create key_data_is_change_thread failed!\n");
     }
@@ -302,6 +308,8 @@ int check_key_call_back(int iCurrent_key_index, int iActionOffset)
     int iRet = 0;
     pthread_t tid;
     iRet = find_action_id(iCurrent_key_index, iActionOffset);
+	
+	//printf("key_index:%d, iActionOffset:%d, function\n", iCurrent_key_index,  iActionOffset);
     if (true == key_need_reg_data_cb.is_reg[iRet]) {
         
         
