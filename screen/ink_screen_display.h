@@ -2,7 +2,7 @@
 
 #define __INK_SCREEN_DISPLAY__H
 
-#define QUEUE_LENGTH	(5)
+#define QUEUE_LENGTH	(8)
 #define QUEUE_PRIORITY_NUM	(3)
 #define PARA_LENTH	(64)
 
@@ -35,6 +35,7 @@ typedef struct queue_info {
 	int iRead_index;
 	int iWrite_index;
 	int iTotal_num;
+	int iQueue_end_flag;
 	display_info_t sz_display_info[QUEUE_LENGTH];
 	char szPath_text[PARA_LENTH];	//图片路径或者需要显示的字符串
 }queue_info_t;

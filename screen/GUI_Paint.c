@@ -524,6 +524,7 @@ void Paint_DrawString_EN(UWORD Xstart, UWORD Ystart, const char * pString,
 {
     UWORD Xpoint = Xstart;
     UWORD Ypoint = Ystart;
+    //printf("func:%s, line:%d\n", __func__, __LINE__);
 
     if (Xstart > Paint.Width || Ystart > Paint.Height) {
         Debug("Paint_DrawString_EN Input exceeds the normal display range\r\n");
@@ -550,6 +551,8 @@ void Paint_DrawString_EN(UWORD Xstart, UWORD Ystart, const char * pString,
         //The next word of the abscissa increases the font of the broadband
         Xpoint += Font->Width;
     }
+	
+    //printf("func:%s, line:%d\n", __func__, __LINE__);
 }
 
 

@@ -81,29 +81,35 @@ static void * handle_queue_thread (void *p_arg)
 
 		if (false == iQueue4_have_data) {
 			pthread_mutex_lock(&queue3_data_mutex);
+			if (true == queue3.iQueue_end_flag) {
 			iTotal_num = queue3.iTotal_num;
 			iCurrent_index = queue3.iRead_index;
 			/*队列3需要一次性把数据全部取出来*/
 			
-			if (iTotal_num > 0) {
-				int i = 0;
-				iWhich_priority = PRIORITY_3;
-				iQueue3_have_data = true;
-				while (queue3.iTotal_num > 0) {//当total num = 0的时候，退出循环
-					memcpy(&st_display_info[i], &queue3.sz_display_info[iCurrent_index], sizeof(display_info_t));
-					//读取一个之后，read位置向后面挪一个，total_num减少一个
-					queue3.iRead_index++;					
-					queue3.iTotal_num--;
-					if (queue3.iRead_index >= QUEUE_LENGTH) {
-						queue3.iRead_index = 0;
+				if (iTotal_num > 0) {
+					int i = 0;
+					iWhich_priority = PRIORITY_3;
+					iQueue3_have_data = true;
+					while (queue3.iTotal_num > 0) {//当total num = 0的时候，退出循环
+						//printf("iCurrent_index:%d, i:%d\n", iCurrent_index, i);
+						memcpy(&st_display_info[i], &queue3.sz_display_info[iCurrent_index], sizeof(display_info_t));
+						//读取一个之后，read位置向后面挪一个，total_num减少一个
+						queue3.iRead_index++;					
+						queue3.iTotal_num--;
+						if (queue3.iRead_index >= QUEUE_LENGTH) {
+							queue3.iRead_index = 0;
+						}
+						iCurrent_index = queue3.iRead_index; //数组的下标需要更新
+						i++;//存储的下标也需要更新
 					}
-					iCurrent_index = queue3.iRead_index; //数组的下标需要更新
-					i++;//存储的下标也需要更新
+						queue3.iQueue_end_flag = false;
+					iValid_data_num = i;
 				}
-				iValid_data_num = i;
-			} else {
+			}else if (false == queue3.iQueue_end_flag) {
+				if (queue3.iTotal_num <= 0) {
 				iWhich_priority = 0;
 				iQueue3_have_data = false;
+				}
 			}
 			pthread_mutex_unlock(&queue3_data_mutex);
 		}
@@ -185,11 +191,12 @@ static void * handle_queue_thread (void *p_arg)
 		} else if (iQueue1_have_data == true) {
 			ink_display_interface(iWhich_priority, st_display_info, iValid_data_num);
 		}
-		usleep(2000*1000);
+		usleep(20*1000);
 	}
 
 	return (void *)0;
 }
+
 
 int display_module_init(void)
 {
@@ -300,6 +307,11 @@ int enqueue_display(int iX, int iY, int iRefresh_mode, char *path_or_text,  int 
 			break;
 		case PRIORITY_3:
             pthread_mutex_lock(&queue3_data_mutex);
+			if (0 == strcmp("end", path_or_text)) {
+				queue3.iQueue_end_flag = true;
+				pthread_mutex_unlock(&queue3_data_mutex);
+				break;
+			}
 			i = queue3.iWrite_index;
 			iTotal_num = queue3.iTotal_num;
 			if (iTotal_num < QUEUE_LENGTH) {
@@ -316,7 +328,7 @@ int enqueue_display(int iX, int iY, int iRefresh_mode, char *path_or_text,  int 
 				iRet = -1;
 				printf("iPriority:%d failed\n", iPriority);
 			}
-			//printf("queue3WWWWWWWWWWWWWWWiWrite_index:%d, iTotal_num:%d, i:%d\n", queue3.iWrite_index, queue3.iTotal_num, i);
+			printf("queue3WWWWWWWWWWWWWWWiWrite_index:%d, iTotal_num:%d, i:%d\n", queue3.iWrite_index, queue3.iTotal_num, i);
             pthread_mutex_unlock(&queue3_data_mutex);
 			break;
 			
@@ -357,7 +369,7 @@ static int ink_display_interface(int iWhich_priority, display_info_t *p_display_
 	static int iPre_Refresh_mode = FULL_REFRESH;
 	int iCur_Refresh_mode = p_display_info[0].iRefresh_Mode;
 
-printf("iRefresh_Mode:%d, p_display_info[0].szPath_text:%s\n", iCur_Refresh_mode, p_display_info[0].szPath_text);
+printf("enter: iRefresh_Mode:%d, p_display_info[0].szPath_text:%s\n", iCur_Refresh_mode, p_display_info[0].szPath_text);
 	//一次都没有执行刷新的话，直接刷新不需要判断是不是和前面一次的刷新有什么不一样
 	if (true) {//说明不是第一次做这个刷新的事情了
 		if (iPre_Refresh_mode != iCur_Refresh_mode) { //说明两次的刷新模式不一样了才需要进行更换刷新模式
@@ -398,7 +410,7 @@ printf("iRefresh_Mode:%d, p_display_info[0].szPath_text:%s\n", iCur_Refresh_mode
 			if (TEXT_ENGLISH == iContent) {
 				Paint_DrawString_EN(iX , iY, p_text_path, &Font16, WHITE, BLACK);
 			} else if (PICTURE == iContent) {
-				GUI_ReadBmp(p_text_path, iX, iY);
+				GUI_ReadBmpBySgy(p_text_path, iX, iY);
 			} else if (TEXT_CHINESE == iContent) {
 				Paint_DrawString_CN(iX , iY, p_text_path, &Font12CN, WHITE, BLACK);
 			}
@@ -407,27 +419,32 @@ printf("iRefresh_Mode:%d, p_display_info[0].szPath_text:%s\n", iCur_Refresh_mode
 			break;
 		case PRIORITY_3: {
 			int i = 0;
+			//printf("pri3____iValid_data_num:%d\n", iValid_data_num);
 			while (i < iValid_data_num) {
 				int iContent = p_display_info[i].iDisplay_type;
 				int iX = p_display_info[i].i_x_coordinate;
 				int iY = p_display_info[i].i_y_coordinate;
 				char *p_text_path = p_display_info[i].szPath_text;
 				if (TEXT_ENGLISH == iContent) {
+					//printf("english\n");
 					Paint_DrawString_EN(iX , iY, p_text_path, &Font16, WHITE, BLACK);
 				} else if (PICTURE == iContent) {
-					GUI_ReadBmp(p_text_path, iX, iY);
+					//printf("picture\n");
+					GUI_ReadBmpBySgy(p_text_path, iX, iY);
 				} else if (TEXT_CHINESE == iContent) {
+					//printf("chinese\n");
 					Paint_DrawString_CN(iX , iY, p_text_path, &Font12CN, WHITE, BLACK);
 				}
 				i++;
 			}
 		}
+			//printf("break pr3 case!!!!!!!\n");
 			break;
 		
 		default:
 			break;
 	}
-	
+	//printf("leave: iRefresh_Mode:%d, p_display_info[0].szPath_text:%s\n", iCur_Refresh_mode, p_display_info[0].szPath_text);
     EPD_Display(BlackImage);
 	return 0;
 }
