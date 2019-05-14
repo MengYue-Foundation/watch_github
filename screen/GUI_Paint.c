@@ -51,8 +51,10 @@
 #include <stdlib.h>
 #include <string.h> //memset()
 #include <math.h>
+#include <stdbool.h>
 
 volatile PAINT Paint;
+extern unsigned char *g_pucHZKMem;
 
 /******************************************************************************
 function:	Create Image
@@ -62,6 +64,9 @@ parameter:
     Height  :   The height of the picture
     Color   :   Whether the picture is inverted
 ******************************************************************************/
+
+//Paint_NewImage (image=0x2b410 "", Width=122, Height=250, Rotate=90, Color=255) at obj/GUI_Paint.c:67
+
 void Paint_NewImage(UBYTE *image, UWORD Width, UWORD Height, UWORD Rotate, UWORD Color)
 {
     Paint.Image = NULL;
@@ -70,7 +75,7 @@ void Paint_NewImage(UBYTE *image, UWORD Width, UWORD Height, UWORD Rotate, UWORD
     Paint.WidthMemory = Width;
     Paint.HeightMemory = Height;
     Paint.Color = Color;    
-    Paint.WidthByte = (Width % 8 == 0)? (Width / 8 ): (Width / 8 + 1);
+    Paint.WidthByte = (Width % 8 == 0)? (Width / 8 ): (Width / 8 + 1);//16
     Paint.HeightByte = Height;    
     printf("WidthByte = %d, HeightByte = %d\r\n", Paint.WidthByte, Paint.HeightByte);
     printf(" EPD_WIDTH / 8 = %d\r\n",  122 / 8);
@@ -279,7 +284,7 @@ parameter:
 void Paint_DrawPoint(UWORD Xpoint, UWORD Ypoint, UWORD Color,
                      DOT_PIXEL Dot_Pixel, DOT_STYLE DOT_STYLE)
 {
-    if (Xpoint > Paint.Width || Ypoint > Paint.Height) {
+    if (Xpoint > Paint.Width || Ypoint > Paint.Height) {//paint 的宽度是 250， 高度是122
         Debug("Paint_DrawPoint Input exceeds the normal display range\r\n");
         return;
     }
@@ -306,11 +311,11 @@ void Paint_DrawPoint(UWORD Xpoint, UWORD Ypoint, UWORD Color,
 /******************************************************************************
 function:	Draw a line of arbitrary slope
 parameter:
-    Xstart ：Starting Xpoint point coordinates
-    Ystart ：Starting Xpoint point coordinates
-    Xend   ：End point Xpoint coordinate
-    Yend   ：End point Ypoint coordinate
-    Color  ：The color of the line segment
+    Xstart 锛歋tarting Xpoint point coordinates
+    Ystart 锛歋tarting Xpoint point coordinates
+    Xend   锛欵nd point Xpoint coordinate
+    Yend   锛欵nd point Ypoint coordinate
+    Color  锛歍he color of the line segment
 ******************************************************************************/
 void Paint_DrawLine(UWORD Xstart, UWORD Ystart, UWORD Xend, UWORD Yend,
                     UWORD Color, LINE_STYLE Line_Style, DOT_PIXEL Dot_Pixel)
@@ -362,12 +367,12 @@ void Paint_DrawLine(UWORD Xstart, UWORD Ystart, UWORD Xend, UWORD Yend,
 /******************************************************************************
 function:	Draw a rectangle
 parameter:
-    Xstart ：Rectangular  Starting Xpoint point coordinates
-    Ystart ：Rectangular  Starting Xpoint point coordinates
-    Xend   ：Rectangular  End point Xpoint coordinate
-    Yend   ：Rectangular  End point Ypoint coordinate
-    Color  ：The color of the Rectangular segment
-    Filled : Whether it is filled--- 1 solid 0：empty
+    Xstart 锛歊ectangular  Starting Xpoint point coordinates
+    Ystart 锛歊ectangular  Starting Xpoint point coordinates
+    Xend   锛歊ectangular  End point Xpoint coordinate
+    Yend   锛歊ectangular  End point Ypoint coordinate
+    Color  锛歍he color of the Rectangular segment
+    Filled : Whether it is filled--- 1 solid 0锛歟mpty
 ******************************************************************************/
 void Paint_DrawRectangle(UWORD Xstart, UWORD Ystart, UWORD Xend, UWORD Yend,
                          UWORD Color, DRAW_FILL Filled, DOT_PIXEL Dot_Pixel)
@@ -395,11 +400,11 @@ void Paint_DrawRectangle(UWORD Xstart, UWORD Ystart, UWORD Xend, UWORD Yend,
 function:	Use the 8-point method to draw a circle of the
             specified size at the specified position->
 parameter:
-    X_Center  ：Center X coordinate
-    Y_Center  ：Center Y coordinate
-    Radius    ：circle Radius
-    Color     ：The color of the ：circle segment
-    Filled    : Whether it is filled: 1 filling 0：Do not
+    X_Center  锛欳enter X coordinate
+    Y_Center  锛欳enter Y coordinate
+    Radius    锛歝ircle Radius
+    Color     锛歍he color of the 锛歝ircle segment
+    Filled    : Whether it is filled: 1 filling 0锛欴o not
 ******************************************************************************/
 void Paint_DrawCircle(UWORD X_Center, UWORD Y_Center, UWORD Radius,
                       UWORD Color, DRAW_FILL  Draw_Fill , DOT_PIXEL Dot_Pixel)
@@ -463,10 +468,10 @@ void Paint_DrawCircle(UWORD X_Center, UWORD Y_Center, UWORD Radius,
 /******************************************************************************
 function:	Show English characters
 parameter:
-    Xpoint           ：X coordinate
-    Ypoint           ：Y coordinate
-    Acsii_Char       ：To display the English characters
-    Font             ：A structure pointer that displays a character size
+    Xpoint           锛歑 coordinate
+    Ypoint           锛歒 coordinate
+    Acsii_Char       锛歍o display the English characters
+    Font             锛欰 structure pointer that displays a character size
     Color_Background : Select the background color of the English character
     Color_Foreground : Select the foreground color of the English character
 ******************************************************************************/
@@ -479,8 +484,8 @@ void Paint_DrawChar(UWORD Xpoint, UWORD Ypoint, const char Acsii_Char,
         Debug("Paint_DrawChar Input exceeds the normal display range\r\n");
         return;
     }
-
-    uint32_t Char_Offset = (Acsii_Char - ' ') * Font->Height * (Font->Width / 8 + (Font->Width % 8 ? 1 : 0));
+	//一个是多高， 所以一次得跨过去16个高度，然后一个字符占据2bit
+    uint32_t Char_Offset = (Acsii_Char - ' ') * Font->Height * (Font->Width / 8 + (Font->Width % 8 ? 1 : 0));//宽度是向上取的, 
     const unsigned char *ptr = &Font->table[Char_Offset];
 
     for (Page = 0; Page < Font->Height; Page ++ ) {
@@ -512,10 +517,10 @@ void Paint_DrawChar(UWORD Xpoint, UWORD Ypoint, const char Acsii_Char,
 /******************************************************************************
 function:	Display the string
 parameter:
-    Xstart           ：X coordinate
-    Ystart           ：Y coordinate
-    pString          ：The first address of the English string to be displayed
-    Font             ：A structure pointer that displays a character size
+    Xstart           锛歑 coordinate
+    Ystart           锛歒 coordinate
+    pString          锛歍he first address of the English string to be displayed
+    Font             锛欰 structure pointer that displays a character size
     Color_Background : Select the background color of the English character
     Color_Foreground : Select the foreground color of the English character
 ******************************************************************************/
@@ -524,7 +529,6 @@ void Paint_DrawString_EN(UWORD Xstart, UWORD Ystart, const char * pString,
 {
     UWORD Xpoint = Xstart;
     UWORD Ypoint = Ystart;
-    //printf("func:%s, line:%d\n", __func__, __LINE__);
 
     if (Xstart > Paint.Width || Ystart > Paint.Height) {
         Debug("Paint_DrawString_EN Input exceeds the normal display range\r\n");
@@ -551,19 +555,17 @@ void Paint_DrawString_EN(UWORD Xstart, UWORD Ystart, const char * pString,
         //The next word of the abscissa increases the font of the broadband
         Xpoint += Font->Width;
     }
-	
-    //printf("func:%s, line:%d\n", __func__, __LINE__);
 }
 
 
 /******************************************************************************
 function:	Display the string
 parameter:
-    Xstart           ：X coordinate
-    Ystart           ：Y coordinate
-    pString          ：The first address of the Chinese string and English
+    Xstart           锛歑 coordinate
+    Ystart           锛歒 coordinate
+    pString          锛歍he first address of the Chinese string and English
                         string to be displayed
-    Font             ：A structure pointer that displays a character size
+    Font             锛欰 structure pointer that displays a character size
     Color_Background : Select the background color of the English character
     Color_Foreground : Select the foreground color of the English character
 ******************************************************************************/
@@ -654,10 +656,10 @@ void Paint_DrawString_CN(UWORD Xstart, UWORD Ystart, const char * pString, cFONT
 /******************************************************************************
 function:	Display nummber
 parameter:
-    Xstart           ：X coordinate
+    Xstart           锛歑 coordinate
     Ystart           : Y coordinate
     Nummber          : The number displayed
-    Font             ：A structure pointer that displays a character size
+    Font             锛欰 structure pointer that displays a character size
     Color_Background : Select the background color of the English character
     Color_Foreground : Select the foreground color of the English character
 ******************************************************************************/
@@ -696,10 +698,10 @@ void Paint_DrawNum(UWORD Xpoint, UWORD Ypoint, int32_t Nummber,
 /******************************************************************************
 function:	Display time
 parameter:
-    Xstart           ：X coordinate
+    Xstart           锛歑 coordinate
     Ystart           : Y coordinate
     pTime            : Time-related structures
-    Font             ：A structure pointer that displays a character size
+    Font             锛欰 structure pointer that displays a character size
     Color            : Select the background color of the English character
 ******************************************************************************/
 void Paint_DrawTime(UWORD Xstart, UWORD Ystart, PAINT_TIME *pTime, sFONT* Font,
@@ -723,20 +725,153 @@ void Paint_DrawTime(UWORD Xstart, UWORD Ystart, PAINT_TIME *pTime, sFONT* Font,
 /******************************************************************************
 function:	Display monochrome bitmap
 parameter:
-    image_buffer ：A picture data converted to a bitmap
+    image_buffer 锛欰 picture data converted to a bitmap
 info:
     Use a computer to convert the image into a corresponding array,
     and then embed the array directly into Imagedata.cpp as a .c file.
 ******************************************************************************/
+/*
+(gdb) p Paint.HeightByte
+$1 = 250
+(gdb) s
+737             for (x = 0; x < Paint.WidthByte; x++) {//8 pixel =  1 byte
+(gdb) p Paint.WidthByte
+$2 = 16
+(gdb)
+y 是从 0-249 取值，包括249
+x 是从 0-15 取值， 包括15
+
+
+*/
 void Paint_DrawBitMap(const unsigned char* image_buffer)
 {
     UWORD x, y;
     UDOUBLE Addr = 0;
-
+	/*
+		这个刷新相当于是竖着来刷新的，y = 0， x = 0-15
+		刷完第一列然后刷第二列
+		*
+		*
+		*
+		*
+		*
+		*
+		*
+		*
+		*
+	*/
     for (y = 0; y < Paint.HeightByte; y++) {
-        for (x = 0; x < Paint.WidthByte; x++) {//8 pixel =  1 byte
-            Addr = x + y * Paint.WidthByte;
+        for (x = 0; x < Paint.WidthByte; x++) {//8 pixel =  1 byte, 这个地方显示的是一个16*8的像素点
+            Addr = x + y * Paint.WidthByte;//y是第几列，一列多少个像素点 Paint.WidthByte 由这个决定
             Paint.Image[Addr] = (unsigned char)image_buffer[Addr];
         }
     }
 }
+
+
+/******************************************************************************
+function:	Display the string
+parameter:
+    Xstart           锛歑 coordinate
+    Ystart           锛歒 coordinate
+    pString          锛歍he first address of the Chinese string and English
+                        string to be displayed
+    Font             锛欰 structure pointer that displays a character size
+    Color_Background : Select the background color of the English character
+    Color_Foreground : Select the foreground color of the English character
+******************************************************************************/
+void Paint_DrawString_CN_by_sgy(UWORD Xstart, UWORD Ystart, const char * pString, cFONT* font, UWORD Color_Background, UWORD Color_Foreground)
+{
+    const char* p_text = pString;
+    int x = Xstart, y = Ystart;
+    int i, j,Num;
+	int index = 0;
+	unsigned int dwArea;
+	unsigned int dwWhere;
+	int iChinese_num = strlen(pString);
+	//printf("enter ..... %s, strlen(pString):%d\n", pString, strlen(pString));
+    /* Send the string character by character on EPD */
+    while (*p_text !=  '\0') {
+		//printf("11111p_text[0]:%x, p_text[1]:%x, index:%d, iChinese_num:%d\n", p_text[0], p_text[1], index, iChinese_num);
+		dwArea	= (p_text[0] & 0xff) - 0xA1;
+		dwWhere = (p_text[1] & 0xff) - 0xA1;
+		
+		//g_pucHZKMem + (dwArea * 94 + dwWhere)*32;;	
+        if(*p_text <= 0x7F) {  //ASCII < 126
+        
+		//printf("2222222222p_text[0]:%x, p_text[1]:%x, index:%d, iChinese_num:%d\n", p_text[0], p_text[1], index, iChinese_num);
+                if(true) {
+                    const char* ptr = g_pucHZKMem + (dwArea * 94 + dwWhere)*32;
+
+                    for (j = 0; j < font->Height; j++) {
+                        for (i = 0; i < font->Width; i++) {
+                            if (FONT_BACKGROUND == Color_Background) { //this process is to speed up the scan
+                                if (*ptr & (0x80 >> (i % 8))) {
+                                    Paint_SetPixel(x + i, y + j, Color_Foreground);
+                                    // Paint_DrawPoint(x + i, y + j, Color_Foreground, DOT_PIXEL_DFT, DOT_STYLE_DFT);
+                                }
+                            } else {
+                                if (*ptr & (0x80 >> (i % 8))) {
+                                    Paint_SetPixel(x + i, y + j, Color_Foreground);
+                                    // Paint_DrawPoint(x + i, y + j, Color_Foreground, DOT_PIXEL_DFT, DOT_STYLE_DFT);
+                                } else {
+                                    Paint_SetPixel(x + i, y + j, Color_Background);
+                                    // Paint_DrawPoint(x + i, y + j, Color_Background, DOT_PIXEL_DFT, DOT_STYLE_DFT);
+                                }
+                            }
+                            if (i % 8 == 7) {
+                                ptr++;
+                            }
+                        }
+                        if (font->Width % 8 != 0) {
+                            ptr++;
+                        }
+                    }
+                    break;
+                }
+            /* Point on the next character */
+            p_text += 1;
+            /* Decrement the column position by 16 */
+            x += font->ASCII_Width;
+        } else {        //Chinese
+        
+		//printf("33333333 p_text[0]:%x, p_text[1]:%x, index:%d, iChinese_num:%d\n", p_text[0], p_text[1], index, iChinese_num);
+				if(true) {
+                    const char* ptr = g_pucHZKMem + (dwArea * 94 + dwWhere)*32;
+
+                    for (j = 0; j < font->Height; j++) {
+                        for (i = 0; i < font->Width; i++) {
+                            if (FONT_BACKGROUND == Color_Background) { //this process is to speed up the scan
+                                if (*ptr & (0x80 >> (i % 8))) {
+                                    Paint_SetPixel(x + i, y + j, Color_Foreground);
+                                    // Paint_DrawPoint(x + i, y + j, Color_Foreground, DOT_PIXEL_DFT, DOT_STYLE_DFT);
+                                }
+                            } else {
+                                if (*ptr & (0x80 >> (i % 8))) {
+                                    Paint_SetPixel(x + i, y + j, Color_Foreground);
+                                    // Paint_DrawPoint(x + i, y + j, Color_Foreground, DOT_PIXEL_DFT, DOT_STYLE_DFT);
+                                } else {
+                                    Paint_SetPixel(x + i, y + j, Color_Background);
+                                    // Paint_DrawPoint(x + i, y + j, Color_Background, DOT_PIXEL_DFT, DOT_STYLE_DFT);
+                                }
+                            }
+                            if (i % 8 == 7) {
+                                ptr++;
+                            }
+                        }
+                        if (font->Width % 8 != 0) {
+                            ptr++;
+                        }
+                    }
+                }
+            /* Point on the next character */
+            p_text += 2;
+            /* Decrement the column position by 16 */
+            x += font->Width;
+        }
+		index += 2;
+		//printf("kkkkkkkk p_text[0]:%x, p_text[1]:%x, index:%d, iChinese_num:%d\n", p_text[0], p_text[1], index, iChinese_num);
+    }
+	//printf("end,,,,%s, strlen(pString):%d, p_text:%x\n", pString, strlen(pString), *p_text);
+}
+

@@ -18,6 +18,7 @@
 #include "ImageData.h"
 #include "EPD_2in13.h"
 #include "ink_screen_display.h"
+#include <sys/mman.h>
 
 pthread_mutex_t  queue1_data_mutex = PTHREAD_MUTEX_INITIALIZER;
 pthread_mutex_t  queue2_data_mutex = PTHREAD_MUTEX_INITIALIZER;
@@ -31,10 +32,14 @@ queue_info_t queue3;
 queue_info_t queue4;
 
 static int ink_display_interface(int iWhich_priority, display_info_t *p_display_info, int iValid_data_num);
+int g_iFdHZK;
+unsigned char *g_pucHZKMem;
 
 UBYTE *BlackImage;
+extern cFONT Font16CN;
 
 
+static int GBKFontInit(char *pcFontFile);
 
 static int test(void);
 
@@ -223,6 +228,7 @@ int display_module_init(void)
     Paint_SelectImage(BlackImage);
     Paint_Clear(WHITE);
 
+	GBKFontInit("/home/pi/Desktop/yanshi/watch_github_test/Fonts/HZK16");
 
 	pthread_t tid;
 	int iRet = 0;
@@ -412,7 +418,7 @@ printf("enter: iRefresh_Mode:%d, p_display_info[0].szPath_text:%s\n", iCur_Refre
 			} else if (PICTURE == iContent) {
 				GUI_ReadBmpBySgy(p_text_path, iX, iY);
 			} else if (TEXT_CHINESE == iContent) {
-				Paint_DrawString_CN(iX , iY, p_text_path, &Font12CN, WHITE, BLACK);
+				Paint_DrawString_CN_by_sgy(iX , iY, p_text_path, &Font16CN, WHITE, BLACK);
 			}
 			
 		}
@@ -433,7 +439,7 @@ printf("enter: iRefresh_Mode:%d, p_display_info[0].szPath_text:%s\n", iCur_Refre
 					GUI_ReadBmpBySgy(p_text_path, iX, iY);
 				} else if (TEXT_CHINESE == iContent) {
 					//printf("chinese\n");
-					Paint_DrawString_CN(iX , iY, p_text_path, &Font12CN, WHITE, BLACK);
+					Paint_DrawString_CN_by_sgy(iX , iY, p_text_path, &Font16CN, WHITE, BLACK);
 				}
 				i++;
 			}
@@ -575,4 +581,26 @@ static int test(void)
 
 }
 
+static int GBKFontInit(char *pcFontFile)
+{
+	struct stat tStat;
 
+	g_iFdHZK = open(pcFontFile, O_RDONLY);
+	if (g_iFdHZK < 0)
+	{
+		printf("can't open %s\n", pcFontFile);
+		return -1;
+	}
+	if(fstat(g_iFdHZK, &tStat))
+	{
+		printf("can't get fstat\n");
+		return -1;
+	}
+	g_pucHZKMem = (unsigned char *)mmap(NULL , tStat.st_size, PROT_READ, MAP_SHARED, g_iFdHZK, 0);
+	if (g_pucHZKMem == (unsigned char *)-1)
+	{
+		printf("can't mmap for hzk16\n");
+		return -1;
+	}
+	return 0;
+}
