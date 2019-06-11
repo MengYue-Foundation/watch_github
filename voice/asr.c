@@ -152,7 +152,7 @@ int struct_cjson(char *pcPut,int iSize,char *pcCjson){
     cJSON_AddNumberToObject(stUploadJson,"rate",RATE);
     cJSON_AddNumberToObject(stUploadJson,"dev_pid",1536);
     cJSON_AddNumberToObject(stUploadJson,"channel",1);
-    cJSON_AddStringToObject(stUploadJson,"token","24.0be8bff41b92a21c2837033ac812b7e4.2592000.1558427099.282335-15249541");
+    cJSON_AddStringToObject(stUploadJson,"token","24.a903669e6100f4ade1273d485d1f5f53.2592000.1561711055.282335-15249541");
     //curl -i -k 'https://aip.baidubce.com/oauth/2.0/token?grant_type=client_credentials&client_id=MapvabAqXweRy9TOAENSCCXC&client_secret=hSmQMZqVCYht6NSVYbgqdfLyOCYGG1u8'
     cJSON_AddStringToObject(stUploadJson,"cuid","baidu_workshop");
     //cJSON_AddNumberToObject(stUploadJson,"cuid",12345678);
@@ -354,16 +354,26 @@ int asr_server(watch_asr_t *pstWatch_asr){
 		system("ffmpeg -y  -i test.wav	-acodec pcm_s16le -f s16le -ac 1 -ar 16000 test01.pcm");
 #endif
 		printf("################111111\n");
+		#if 0
 		FILE *pstFp1;		
 		FILE *pstFp2;
 
 		pstFp1 = popen("arecord -D hw:1,0 -f S16_LE -V mono -r16000 -c 1 -t wav  ./test.wav", "r");
+		if(pstFp1==NULL){
+			perror("popen");
+			printf("0000000000000000000000000000000000\n");
+		}
 		pclose(pstFp1);
 		
-		
+		printf("1234567890000000000000000000000\n");
 		pstFp2 = popen("ffmpeg -y  -i test.wav	-acodec pcm_s16le -f s16le -ac 1 -ar 16000 test01.pcm", "r");
+		if(pstFp1==NULL){
+			perror("popen");
+		}
 		pclose(pstFp2);
-
+#endif
+		system("arecord -D hw:1,0 -f S16_LE -V mono -r16000 -c 1 -t wav  ./test.wav");
+		system("ffmpeg -y  -i test.wav	-acodec pcm_s16le -f s16le -ac 1 -ar 16000 test01.pcm");
 
 		pstWatch_asr->pcPcm=(char *)malloc(FILESIZE*sizeof(char));
 		pstWatch_asr->pcPcm64=(char *)malloc(3*FILESIZE*sizeof(char));

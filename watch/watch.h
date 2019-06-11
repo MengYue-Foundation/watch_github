@@ -9,6 +9,7 @@
 #include "../phone/phone.h"
 #include "../message/message.h"
 #include <ink_screen_display.h>
+#include "../time/watch_time.h"
 
 typedef struct watch{
 	int iId;
