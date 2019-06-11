@@ -57,7 +57,9 @@ int which_key_press(int iFd, key_read_i2c_data_t *key_read_i2c_data)
     iData = (szBuf[1] << 8) | (szBuf[0]);
     //printf("buf[0]:0x%x, buf[1]:0x%x, iData:0x%x\n", szBuf[0], szBuf[1], iData);
     int per = 0;
-	iData &= 0xffff;
+	//这个地方记得要改回来
+	//iData &= 0xffff;
+	iData &= 0x00ff;
 
     iPrev_status = iNow_status;
     iNow_status = 0x0;
@@ -68,26 +70,26 @@ int which_key_press(int iFd, key_read_i2c_data_t *key_read_i2c_data)
 		case 0x0004:printf("KEY5 PRESS\r\n");break;
 		case 0x0008:printf("KEY4 PRESS\r\n");break;
 		case 0x0010:
-            //printf("KEY3 PRESS\r\n");
+            printf("KEY3 PRESS\r\n");
             key_index = KEY3;
             iNow_status |= (0x1 << key_index);
             iKey_status = DOWN;
             break;
 		case 0x0020:
-            //printf("KEY2 PRESS\r\n");
+            printf("KEY2 PRESS\r\n");
             key_index = KEY2; 
             iNow_status |= (0x1 << key_index);
             iKey_status = DOWN;
         break;
 		case 0x0040:
-            //printf("KEY1 PRESS\r\n");
+            printf("KEY1 PRESS\r\n");
             key_index = KEY1;
         
             iNow_status |= (0x1 << key_index);
             iKey_status = DOWN;
             break;
 		case 0x0080:
-            //printf("KEY0 PRESS\r\n");
+            printf("KEY0 PRESS\r\n");
             key_index = KEY0;
         
             iNow_status |= (0x1 << key_index);
@@ -212,12 +214,21 @@ void * handle_key_data_thread (void *p_arg)
 				int iRet = 0;
 				iKey_have_pressed = UP;
 				//printf("we should call	UP function, iCurrent_handle_key_index:%d, &p_key_data->iCurrent_key_index:0x%x, p_key_data:0x%x\n", iCurrent_handle_key_index, &p_key_data->iCurrent_key_index, p_key_data);
-				
-				check_key_call_back(iCurrent_handle_key_index, PRESS_UP);
-			
+
+				/*
+					短按和抬起都会创建一个线程去执行，但是没有代码里没有写短按和抬起的执行顺序的逻辑，所以有可能
+					抬起的线程会先执行。所以加了一个这个标志
+				*/
+				int iShort_press_flag = false;
 				if (iTime_cnt < LONG_PRESS_TIME) {
+					iShort_press_flag = true;
 					check_key_call_back(iCurrent_handle_key_index, SHORT_PRESS);
 				} 
+
+				if (false == iShort_press_flag) {
+					check_key_call_back(iCurrent_handle_key_index, PRESS_UP);
+				}
+				
 				/*按键抬起的时候，说明数据已经处理完毕了，标志位清空*/
 				p_key_data->iNeed_process = false;
 				iTime_cnt = 0;

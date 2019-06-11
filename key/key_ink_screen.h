@@ -23,7 +23,7 @@ extern int key_module_init();
 
 //单位是1ms
 #define PER_INC_TIME_MS     (10)
-#define LONG_PRESS_TIME     (1000 / PER_INC_TIME_MS)
+#define LONG_PRESS_TIME     (2000 / PER_INC_TIME_MS)
 
 #define ACTION_NUM_PER_KEY  (4)
 typedef void * (key_func_callback_t)(void *p_parameter);

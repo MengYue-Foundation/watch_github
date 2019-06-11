@@ -240,11 +240,10 @@ int display_module_init(void)
 	return 0;
 }
 
-
-
 int enqueue_display(int iX, int iY, int iRefresh_mode, char *path_or_text,  int iPriority, int iDisplay_type)
 {
 	int iRet = 0;
+	
 	
 	display_info_t st_display_info;
 	memset(&st_display_info, 0, sizeof(st_display_info));
@@ -403,27 +402,29 @@ printf("enter: iRefresh_Mode:%d, p_display_info[0].szPath_text:%s\n", iCur_Refre
 
 	
 	Paint_SelectImage(BlackImage);
-	Paint_Clear(WHITE);
 	switch (iWhich_priority) {
 		case PRIORITY_1:
-		case PRIORITY_2:
 		case PRIORITY_4: {
+			
+			Paint_Clear(WHITE);
 			int iContent = p_display_info[0].iDisplay_type;
 			int iX = p_display_info[0].i_x_coordinate;
 			int iY = p_display_info[0].i_y_coordinate;
 			char *p_text_path = p_display_info[0].szPath_text;
-			printf("iContent:%d, p_text_path:%s\n", iContent, p_text_path);
+			//printf("iContent:%d, p_text_path:%s\n", iContent, p_text_path);
 			if (TEXT_ENGLISH == iContent) {
 				Paint_DrawString_EN(iX , iY, p_text_path, &Font16, WHITE, BLACK);
 			} else if (PICTURE == iContent) {
 				GUI_ReadBmpBySgy(p_text_path, iX, iY);
-			} else if (TEXT_CHINESE == iContent) {
+			} else if (TEXT_CHINESE == iContent) {				
 				Paint_DrawString_CN_by_sgy(iX , iY, p_text_path, &Font16CN, WHITE, BLACK);
 			}
 			
 		}
 			break;
 		case PRIORITY_3: {
+			
+			Paint_Clear(WHITE);
 			int i = 0;
 			//printf("pri3____iValid_data_num:%d\n", iValid_data_num);
 			while (i < iValid_data_num) {
@@ -432,13 +433,13 @@ printf("enter: iRefresh_Mode:%d, p_display_info[0].szPath_text:%s\n", iCur_Refre
 				int iY = p_display_info[i].i_y_coordinate;
 				char *p_text_path = p_display_info[i].szPath_text;
 				if (TEXT_ENGLISH == iContent) {
-					//printf("english\n");
+					//printf("english\n");					
 					Paint_DrawString_EN(iX , iY, p_text_path, &Font16, WHITE, BLACK);
 				} else if (PICTURE == iContent) {
-					//printf("picture\n");
+					//printf("picture\n");					
 					GUI_ReadBmpBySgy(p_text_path, iX, iY);
 				} else if (TEXT_CHINESE == iContent) {
-					//printf("chinese\n");
+					//printf("chinese\n");					
 					Paint_DrawString_CN_by_sgy(iX , iY, p_text_path, &Font16CN, WHITE, BLACK);
 				}
 				i++;
@@ -447,6 +448,25 @@ printf("enter: iRefresh_Mode:%d, p_display_info[0].szPath_text:%s\n", iCur_Refre
 			//printf("break pr3 case!!!!!!!\n");
 			break;
 		
+		case PRIORITY_2: {
+			int iContent = p_display_info[0].iDisplay_type;
+			int iX = p_display_info[0].i_x_coordinate;
+			int iY = p_display_info[0].i_y_coordinate;
+			char *p_text_path = p_display_info[0].szPath_text;
+			//printf("iContent:%d, p_text_path:%s\n", iContent, p_text_path);
+			if (TEXT_ENGLISH == iContent) {
+				int iNumString = strlen(p_text_path);
+				Paint_ClearWindows(iX, iY, iX+12*iNumString, iY+16, WHITE);
+				Paint_DrawString_EN(iX , iY, p_text_path, &Font16, WHITE, BLACK);
+			} else if (PICTURE == iContent) {
+				GUI_ReadBmpBySgy(p_text_path, iX, iY);
+			} else if (TEXT_CHINESE == iContent) {
+				Paint_ClearWindows(iX, iY, iX+16, iY+16, WHITE);
+				Paint_DrawString_CN_by_sgy(iX , iY, p_text_path, &Font16CN, WHITE, BLACK);
+			}
+		}
+			break;
+			
 		default:
 			break;
 	}
