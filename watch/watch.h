@@ -10,6 +10,7 @@
 #include "../message/message.h"
 #include <ink_screen_display.h>
 #include "../time/watch_time.h"
+#include "../key/raspberry_gpio_alps.h"
 
 typedef struct watch{
 	int iId;
@@ -19,5 +20,7 @@ typedef struct watch{
 
 int watch_init(watch_t *pstWatch);
 int watch_exec(watch_t *pstWatch);
+int keyall_first(watch_t *pstWatch);
+int key3_second(watch_t *pstWatch);
 
 #endif

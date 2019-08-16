@@ -12,6 +12,7 @@
 #include <string.h>
 #include <stdbool.h>
 #include <key_ink_screen.h>
+#include <stdlib.h>
 
 
 pthread_mutex_t  key_data_status_change_mutex = PTHREAD_MUTEX_INITIALIZER;
@@ -58,8 +59,8 @@ int which_key_press(int iFd, key_read_i2c_data_t *key_read_i2c_data)
     //printf("buf[0]:0x%x, buf[1]:0x%x, iData:0x%x\n", szBuf[0], szBuf[1], iData);
     int per = 0;
 	//这个地方记得要改回来
-	//iData &= 0xffff;
-	iData &= 0x00ff;
+	iData &= 0xffff;
+	//iData &= 0x00ff;
 
     iPrev_status = iNow_status;
     iNow_status = 0x0;
