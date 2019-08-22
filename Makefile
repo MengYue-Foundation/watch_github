@@ -15,7 +15,7 @@ export AS LD CC CPP AR NM
 export STRIP OBJCOPY OBJDUMP
 
 CFLAGS := -Wall -O2 -ggdb3
-CFLAGS += -I $(shell pwd)/include  -I $(shell pwd)/screen -I $(shell pwd)/Fonts  -I $(shell pwd)/key/ -I $(shell pwd)/time -I $(shell pwd)/watch -I $(shell pwd)/phone -I $(shell pwd)/message
+CFLAGS += -I $(shell pwd)/include  -I $(shell pwd)/screen -I $(shell pwd)/Fonts  -I $(shell pwd)/key/ -I $(shell pwd)/time -I $(shell pwd)/watch -I $(shell pwd)/phone -I $(shell pwd)/message -I$(shell pwd)/common
 
 LDFLAGS := -lm -lwiringPi -lpthread -lcurl -lcrypto
 
@@ -28,6 +28,7 @@ TARGET := show_file
 
 
 
+obj-y += common/
 obj-y += screen/
 obj-y += Fonts/
 obj-y += key/
@@ -36,6 +37,7 @@ obj-y += watch/
 obj-y += voice/
 obj-y += phone/
 obj-y += message/
+obj-y += app/
 obj-y += main.o
 
 

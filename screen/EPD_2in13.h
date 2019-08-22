@@ -39,6 +39,14 @@
 #define EPD_WIDTH       122
 #define EPD_HEIGHT      250
 
+// Display resolution
+#define EPD_2IN13_V2_WIDTH       122
+#define EPD_2IN13_V2_HEIGHT      250
+
+#define EPD_2IN13_V2_FULL			0
+#define EPD_2IN13_V2_PART			1
+
+
 extern const unsigned char lut_full_update[];
 extern const unsigned char lut_partial_update[];
 
@@ -46,5 +54,14 @@ UBYTE EPD_Init(const unsigned char* update);
 void EPD_Clear(void);
 void EPD_Display(UBYTE *Image);
 void EPD_Sleep(void);
+
+
+void EPD_2IN13_V2_Init(UBYTE Mode);
+void EPD_2IN13_V2_Clear(void);
+void EPD_2IN13_V2_Display(UBYTE *Image);
+void EPD_2IN13_V2_DisplayPart(UBYTE *Image);
+void EPD_2IN13_V2_DisplayPartBaseImage(UBYTE *Image);
+void EPD_2IN13_V2_Sleep(void);
+
 
 #endif

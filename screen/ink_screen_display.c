@@ -211,10 +211,9 @@ int display_module_init(void)
     // Exception handling:ctrl + c
     //signal(SIGINT, Handler);
     
-    if(EPD_Init(lut_full_update) != 0) {
-        printf("e-Paper init failed\r\n");
-    }
-    EPD_Clear();
+    EPD_2IN13_V2_Init(EPD_2IN13_V2_FULL);
+
+    EPD_2IN13_V2_Clear();
     DEV_Delay_ms(500);
 
     //Create a new image cache
@@ -224,11 +223,12 @@ int display_module_init(void)
         return -1;
     }
     printf("Paint_NewImage\r\n");
-    Paint_NewImage(BlackImage, EPD_WIDTH, EPD_HEIGHT, 90, WHITE);
+    Paint_NewImage(BlackImage, EPD_2IN13_V2_WIDTH, EPD_2IN13_V2_HEIGHT, 270, WHITE);
     Paint_SelectImage(BlackImage);
+    Paint_SetMirroring(MIRROR_HORIZONTAL); //
     Paint_Clear(WHITE);
 
-	GBKFontInit("/home/pi/Desktop/yanshi/watch_github_test/Fonts/HZK16");
+	GBKFontInit("./Fonts/HZK16");
 
 	pthread_t tid;
 	int iRet = 0;
@@ -372,6 +372,7 @@ static int ink_display_interface(int iWhich_priority, display_info_t *p_display_
 
 
 	static int iPre_Refresh_mode = FULL_REFRESH;
+	static int iMax_clear_num_string = 0;
 	int iCur_Refresh_mode = p_display_info[0].iRefresh_Mode;
 
 printf("enter: iRefresh_Mode:%d, p_display_info[0].szPath_text:%s\n", iCur_Refresh_mode, p_display_info[0].szPath_text);
@@ -383,19 +384,17 @@ printf("enter: iRefresh_Mode:%d, p_display_info[0].szPath_text:%s\n", iCur_Refre
 				iPre_Refresh_mode = FULL_REFRESH;
 				printf("33333333333333333\n");
 				//Partial refresh, example shows time,刷新的接口理论上只需要调用一次就可以了
-				 if(EPD_Init(lut_full_update) != 0) {
-					 printf("e-Paper init failed\r\n");
-				 }
+				EPD_2IN13_V2_Init(EPD_2IN13_V2_FULL);
 				 
-				 EPD_Clear();
+				EPD_2IN13_V2_Clear();
 			} else if (PART_REFRESH == iCur_Refresh_mode) {
-				iPre_Refresh_mode = PART_REFRESH;
+				iPre_Refresh_mode = PART_REFRESH;				
+				//EPD_2IN13_V2_Init(EPD_2IN13_V2_FULL);
+				EPD_2IN13_V2_DisplayPartBaseImage(BlackImage);
 				//局部刷新的接口
 				printf("4444444444444444\n");
 				//Partial refresh, example shows time,刷新的接口理论上只需要调用一次就可以了
-				 if(EPD_Init(lut_partial_update) != 0) {
-					 printf("e-Paper init failed\r\n");
-				 }
+				EPD_2IN13_V2_Init(EPD_2IN13_V2_PART);
 			}
 		}//
 	}
@@ -452,16 +451,20 @@ printf("enter: iRefresh_Mode:%d, p_display_info[0].szPath_text:%s\n", iCur_Refre
 			int iContent = p_display_info[0].iDisplay_type;
 			int iX = p_display_info[0].i_x_coordinate;
 			int iY = p_display_info[0].i_y_coordinate;
-			char *p_text_path = p_display_info[0].szPath_text;
-			//printf("iContent:%d, p_text_path:%s\n", iContent, p_text_path);
+			char *p_text_path = p_display_info[0].szPath_text;			
+			int iNumString = strlen(p_text_path);
+			if (iNumString > iMax_clear_num_string) {
+				iMax_clear_num_string = iNumString;
+			} 
+			/*一个中文是两个长度的字符*/
+			//printf("iContent:%d, p_text_path:%s, iNumString:%d\n", iContent, p_text_path, iNumString);
 			if (TEXT_ENGLISH == iContent) {
-				int iNumString = strlen(p_text_path);
 				Paint_ClearWindows(iX, iY, iX+12*iNumString, iY+16, WHITE);
 				Paint_DrawString_EN(iX , iY, p_text_path, &Font16, WHITE, BLACK);
 			} else if (PICTURE == iContent) {
 				GUI_ReadBmpBySgy(p_text_path, iX, iY);
 			} else if (TEXT_CHINESE == iContent) {
-				Paint_ClearWindows(iX, iY, iX+16, iY+16, WHITE);
+				Paint_ClearWindows(iX, iY, iX+iMax_clear_num_string*8, iY+iMax_clear_num_string*8, WHITE);
 				Paint_DrawString_CN_by_sgy(iX , iY, p_text_path, &Font16CN, WHITE, BLACK);
 			}
 		}
@@ -470,11 +473,18 @@ printf("enter: iRefresh_Mode:%d, p_display_info[0].szPath_text:%s\n", iCur_Refre
 		default:
 			break;
 	}
+	
 	//printf("leave: iRefresh_Mode:%d, p_display_info[0].szPath_text:%s\n", iCur_Refresh_mode, p_display_info[0].szPath_text);
-    EPD_Display(BlackImage);
+	if (FULL_REFRESH == iCur_Refresh_mode) {
+		EPD_2IN13_V2_Display(BlackImage);
+	} else if (PART_REFRESH == iCur_Refresh_mode) {
+        EPD_2IN13_V2_DisplayPart(BlackImage);
+	}
+	
 	return 0;
 }
 
+#if 0
 static int test(void)
 {
 		printf("2.13inch e-Paper demo\r\n");
@@ -483,7 +493,7 @@ static int test(void)
 		// Exception handling:ctrl + c
 		//signal(SIGINT, Handler);
 	
-		if(EPD_Init(lut_full_update) != 0) {
+		if(EPD_2IN13_V2_Init(EPD_2IN13_V2_FULL) != 0) {
 			printf("e-Paper init failed\r\n");
 		}
 		EPD_Clear();
@@ -557,7 +567,7 @@ static int test(void)
 #endif
 	
 #if 1   //Partial refresh, example shows time    
-		if(EPD_Init(lut_partial_update) != 0) {
+		if(EPD_2IN13_V2_Init(EPD_2IN13_V2_PART) != 0) {
 			printf("e-Paper init failed\r\n");
 		}
 		Paint_SelectImage(BlackImage);
@@ -600,7 +610,7 @@ static int test(void)
 		return 0;
 
 }
-
+#endif
 static int GBKFontInit(char *pcFontFile)
 {
 	struct stat tStat;
@@ -624,3 +634,5 @@ static int GBKFontInit(char *pcFontFile)
 	}
 	return 0;
 }
+
+
