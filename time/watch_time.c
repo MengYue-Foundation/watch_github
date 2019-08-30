@@ -9,8 +9,8 @@ int watch_currenttime(watchTime_t *pstWatchTime){
 	pstWatchTime->iYear=1900+pstTime->tm_year;
 	pstWatchTime->iMounth=1+pstTime->tm_mon;
 
-    pstWatchTime->iHour=(pstTime->tm_hour+8)%24;
-    if(pstTime->tm_hour+8>=24){
+    pstWatchTime->iHour=(pstTime->tm_hour+7)%24;
+    if(pstTime->tm_hour+7>=24){
         pstWatchTime->iDay=pstTime->tm_mday+1;
     }
 	

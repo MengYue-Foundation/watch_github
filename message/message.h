@@ -1,1 +1,0 @@
-#ifndef __MESSAGE_H__#define __MESSAGE_H__#include "../voice/serial_watch.h"#define MESG_NAME 1#define	MESG_CONTENT 0typedef struct watch_mesg{	int cszName[20];	char cszMesg[512];	int iState;}watch_mesg_t;int watch_mesg_send(watch_mesg_t *pstWatchMesg);#endif

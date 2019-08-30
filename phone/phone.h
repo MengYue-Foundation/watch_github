@@ -1,1 +1,0 @@
-#ifndef __PHONE_H__#define __PHONE_H__#include "../voice/serial_watch.h"int watch_phone_call(char *pcName);#endif

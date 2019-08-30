@@ -1,0 +1,2032 @@
+[1mdiff --git a/Makefile b/Makefile[m
+[1mindex 8a0b312..0c67e0a 100755[m
+[1m--- a/Makefile[m
+[1m+++ b/Makefile[m
+[36m@@ -15,7 +15,7 @@[m [mexport AS LD CC CPP AR NM[m
+ export STRIP OBJCOPY OBJDUMP[m
+ [m
+ CFLAGS := -Wall -O2 -ggdb3[m
+[31m-CFLAGS += -I $(shell pwd)/include  -I $(shell pwd)/screen -I $(shell pwd)/Fonts  -I $(shell pwd)/key/ -I $(shell pwd)/time -I $(shell pwd)/watch -I $(shell pwd)/phone -I $(shell pwd)/message -I$(shell pwd)/common[m
+[32m+[m[32mCFLAGS += -I $(shell pwd)/include  -I $(shell pwd)/screen -I $(shell pwd)/Fonts  -I $(shell pwd)/key/ -I $(shell pwd)/time -I $(shell pwd)/watch -I $(shell pwd)/common -I $(shell pwd)/ATserial -I$(shell pwd)/taptic_engine[m[41m[m
+ [m
+ LDFLAGS := -lm -lwiringPi -lpthread -lcurl -lcrypto[m
+ [m
+[36m@@ -30,13 +30,13 @@[m [mTARGET := show_file[m
+ [m
+ obj-y += common/[m
+ obj-y += screen/[m
+[32m+[m[32mobj-y += taptic_engine/[m[41m[m
+ obj-y += Fonts/[m
+ obj-y += key/[m
+ obj-y += time/[m
+ obj-y += watch/[m
+[32m+[m[32mobj-y += ATserial/[m[41m[m
+ obj-y += voice/[m
+[31m-obj-y += phone/[m
+[31m-obj-y += message/[m
+ obj-y += app/[m
+ obj-y += main.o[m
+ [m
+[1mdiff --git a/message/Makefile b/message/Makefile[m
+[1mdeleted file mode 100644[m
+[1mindex 2011154..0000000[m
+[1m--- a/message/Makefile[m
+[1m+++ /dev/null[m
+[36m@@ -1 +0,0 @@[m
+[31m-obj-y += message.o[m
+\ No newline at end of file[m
+[1mdiff --git a/message/message.c b/message/message.c[m
+[1mdeleted file mode 100644[m
+[1mindex 9d2ca7c..0000000[m
+[1m--- a/message/message.c[m
+[1m+++ /dev/null[m
+[36m@@ -1 +0,0 @@[m
+[31m-#include "message.h"int watch_mesg_send(watch_mesg_t *pstWatchMesg){	if(!strcmp(pstWatchMesg->cszName,"高也")){		serial_message_watch_api("15652964522",pstWatchMesg->cszMesg);	}else if(!strcmp(pstWatchMesg->cszName,"上官悦")){		serial_message_watch_api("13693199230",pstWatchMesg->cszMesg);	}else if(!strcmp(pstWatchMesg->cszName,"谢思桐")){        serial_message_watch_api("13269217250",pstWatchMesg->cszMesg);    }	bzero(pstWatchMesg,sizeof(watch_mesg_t));	return 0;};[m
+\ No newline at end of file[m
+[1mdiff --git a/message/message.h b/message/message.h[m
+[1mdeleted file mode 100644[m
+[1mindex da3003f..0000000[m
+[1m--- a/message/message.h[m
+[1m+++ /dev/null[m
+[36m@@ -1 +0,0 @@[m
+[31m-#ifndef __MESSAGE_H__#define __MESSAGE_H__#include "../voice/serial_watch.h"#define MESG_NAME 1#define	MESG_CONTENT 0typedef struct watch_mesg{	int cszName[20];	char cszMesg[512];	int iState;}watch_mesg_t;int watch_mesg_send(watch_mesg_t *pstWatchMesg);#endif[m
+\ No newline at end of file[m
+[1mdiff --git a/phone/Makefile b/phone/Makefile[m
+[1mdeleted file mode 100644[m
+[1mindex 7b9f046..0000000[m
+[1m--- a/phone/Makefile[m
+[1m+++ /dev/null[m
+[36m@@ -1 +0,0 @@[m
+[31m-obj-y += phone.o[m
+\ No newline at end of file[m
+[1mdiff --git a/phone/phone.c b/phone/phone.c[m
+[1mdeleted file mode 100644[m
+[1mindex fbc40c3..0000000[m
+[1m--- a/phone/phone.c[m
+[1m+++ /dev/null[m
+[36m@@ -1 +0,0 @@[m
+[31m-#include "phone.h"int watch_phone_call(char *pcName){	serial_phone_watch_api(pcName);	return 0;};[m
+\ No newline at end of file[m
+[1mdiff --git a/phone/phone.h b/phone/phone.h[m
+[1mdeleted file mode 100644[m
+[1mindex a864a2d..0000000[m
+[1m--- a/phone/phone.h[m
+[1m+++ /dev/null[m
+[36m@@ -1 +0,0 @@[m
+[31m-#ifndef __PHONE_H__#define __PHONE_H__#include "../voice/serial_watch.h"int watch_phone_call(char *pcName);#endif[m
+\ No newline at end of file[m
+[1mdiff --git a/time/watch_time.c b/time/watch_time.c[m
+[1mindex aa5e69f..a651357 100755[m
+[1m--- a/time/watch_time.c[m
+[1m+++ b/time/watch_time.c[m
+[36m@@ -1,22 +1,22 @@[m
+[31m-#include "watch_time.h"[m
+[31m-[m
+[31m-int watch_currenttime(watchTime_t *pstWatchTime){[m
+[31m-	time_t tTime;[m
+[31m-    struct tm *pstTime;[m
+[31m-    time(&tTime);[m
+[31m-    pstTime=localtime(&tTime);[m
+[31m-[m
+[31m-	pstWatchTime->iYear=1900+pstTime->tm_year;[m
+[31m-	pstWatchTime->iMounth=1+pstTime->tm_mon;[m
+[31m-[m
+[31m-    pstWatchTime->iHour=(pstTime->tm_hour+8)%24;[m
+[31m-    if(pstTime->tm_hour+8>=24){[m
+[31m-        pstWatchTime->iDay=pstTime->tm_mday+1;[m
+[31m-    }[m
+[31m-	[m
+[31m-	pstWatchTime->iDay=pstTime->tm_mday;[m
+[31m-	[m
+[31m-	pstWatchTime->iMin=pstTime->tm_min;[m
+[31m-	pstWatchTime->iSec=pstTime->tm_sec;[m
+[31m-	return 0;[m
+[31m-}[m
+[32m+[m[32m#include "watch_time.h"[m
+[32m+[m
+[32m+[m[32mint watch_currenttime(watchTime_t *pstWatchTime){[m
+[32m+[m	[32mtime_t tTime;[m
+[32m+[m[32m    struct tm *pstTime;[m
+[32m+[m[32m    time(&tTime);[m
+[32m+[m[32m    pstTime=localtime(&tTime);[m
+[32m+[m
+[32m+[m	[32mpstWatchTime->iYear=1900+pstTime->tm_year;[m
+[32m+[m	[32mpstWatchTime->iMounth=1+pstTime->tm_mon;[m
+[32m+[m
+[32m+[m[32m    pstWatchTime->iHour=(pstTime->tm_hour+7)%24;[m
+[32m+[m[32m    if(pstTime->tm_hour+7>=24){[m
+[32m+[m[32m        pstWatchTime->iDay=pstTime->tm_mday+1;[m
+[32m+[m[32m    }[m
+[32m+[m[41m	[m
+[32m+[m	[32mpstWatchTime->iDay=pstTime->tm_mday;[m
+[32m+[m[41m	[m
+[32m+[m	[32mpstWatchTime->iMin=pstTime->tm_min;[m
+[32m+[m	[32mpstWatchTime->iSec=pstTime->tm_sec;[m
+[32m+[m	[32mreturn 0;[m
+[32m+[m[32m}[m
+[1mdiff --git a/time/watch_time.h b/time/watch_time.h[m
+[1mindex 39ac08d..113dee4 100755[m
+[1m--- a/time/watch_time.h[m
+[1m+++ b/time/watch_time.h[m
+[36m@@ -1,19 +1,19 @@[m
+[31m-#ifndef __WATCH_TIME_H__[m
+[31m-#define __WATCH_TIME_H__[m
+[31m-[m
+[31m-#include <unistd.h>[m
+[31m-#include <stdio.h>[m
+[31m-#include <string.h>[m
+[31m-#include <time.h>[m
+[31m-[m
+[31m-typedef struct watchTime{[m
+[31m-	int iYear;[m
+[31m-	int iMounth;[m
+[31m-	int iDay;[m
+[31m-	int iHour;[m
+[31m-	int iMin;[m
+[31m-	int iSec;[m
+[31m-}watchTime_t;[m
+[31m-[m
+[31m-int watch_currenttime(watchTime_t *pstWatchTime);[m
+[31m-#endif[m
+[32m+[m[32m#ifndef __WATCH_TIME_H__[m
+[32m+[m[32m#define __WATCH_TIME_H__[m
+[32m+[m
+[32m+[m[32m#include <unistd.h>[m
+[32m+[m[32m#include <stdio.h>[m
+[32m+[m[32m#include <string.h>[m
+[32m+[m[32m#include <time.h>[m
+[32m+[m
+[32m+[m[32mtypedef struct watchTime{[m
+[32m+[m	[32mint iYear;[m
+[32m+[m	[32mint iMounth;[m
+[32m+[m	[32mint iDay;[m
+[32m+[m	[32mint iHour;[m
+[32m+[m	[32mint iMin;[m
+[32m+[m	[32mint iSec;[m
+[32m+[m[32m}watchTime_t;[m
+[32m+[m
+[32m+[m[32mint watch_currenttime(watchTime_t *pstWatchTime);[m
+[32m+[m[32m#endif[m
+[1mdiff --git a/voice/Makefile b/voice/Makefile[m
+[1mindex 206f795..b1944e9 100755[m
+[1m--- a/voice/Makefile[m
+[1m+++ b/voice/Makefile[m
+[36m@@ -1,9 +1,6 @@[m
+[31m-obj-y += cJSON.o[m
+ obj-y += asr.o[m
+[31m-obj-y += serial_watch.o[m
+ #obj-y += tts.o[m
+ #obj-y += watch_aiworld_client.o[m
+ #obj-y += watch_ehome.o[m
+[31m-obj-y += watch_mesg.o[m
+[32m+[m
+ #obj-y += watch_serial.o[m
+[31m-obj-y += weather.o[m
+\ No newline at end of file[m
+[1mdiff --git a/voice/asr.c b/voice/asr.c[m
+[1mindex c6e3da6..0804ed5 100755[m
+[1m--- a/voice/asr.c[m
+[1m+++ b/voice/asr.c[m
+[36m@@ -152,7 +152,7 @@[m [mint struct_cjson(char *pcPut,int iSize,char *pcCjson){[m
+     cJSON_AddNumberToObject(stUploadJson,"rate",RATE);[m
+     cJSON_AddNumberToObject(stUploadJson,"dev_pid",1536);[m
+     cJSON_AddNumberToObject(stUploadJson,"channel",1);[m
+[31m-    cJSON_AddStringToObject(stUploadJson,"token","24.a903669e6100f4ade1273d485d1f5f53.2592000.1561711055.282335-15249541");[m
+[32m+[m[32m    cJSON_AddStringToObject(stUploadJson,"token","24.81a846e99f4fef23ad80bbc4210d8cd2.2592000.1568796408.282335-15249541");[m
+     //curl -i -k 'https://aip.baidubce.com/oauth/2.0/token?grant_type=client_credentials&client_id=MapvabAqXweRy9TOAENSCCXC&client_secret=hSmQMZqVCYht6NSVYbgqdfLyOCYGG1u8'[m
+     cJSON_AddStringToObject(stUploadJson,"cuid","baidu_workshop");[m
+     //cJSON_AddNumberToObject(stUploadJson,"cuid",12345678);[m
+[1mdiff --git a/voice/asr.h b/voice/asr.h[m
+[1mindex 09976d4..70b4599 100755[m
+[1m--- a/voice/asr.h[m
+[1m+++ b/voice/asr.h[m
+[36m@@ -1,5 +1,5 @@[m
+ #ifndef __AIWORLD_ASR_H__[m
+[31m-#define __AIWORLE_ASR_H__[m
+[32m+[m[32m#define __AIWORLD_ASR_H__[m
+ [m
+ [m
+ #include <stdio.h>[m
+[36m@@ -18,7 +18,7 @@[m
+ [m
+ #include <stdlib.h>[m
+ #include <iconv.h>[m
+[31m-#include "cJSON.h"[m
+[32m+[m[32m#include <cJSON.h>[m
+ #include <openssl/pem.h>[m
+ #include <openssl/bio.h>[m
+ #include <openssl/evp.h>[m
+[1mdiff --git a/voice/cJSON.c b/voice/cJSON.c[m
+[1mdeleted file mode 100755[m
+[1mindex c3d1a4e..0000000[m
+[1m--- a/voice/cJSON.c[m
+[1m+++ /dev/null[m
+[36m@@ -1,2412 +0,0 @@[m
+[31m-/*[m
+[31m-  Copyright (c) 2009 Dave Gamble[m
+[31m-[m
+[31m-  Permission is hereby granted, free of charge, to any person obtaining a copy[m
+[31m-  of this software and associated documentation files (the "Software"), to deal[m
+[31m-  in the Software without restriction, including without limitation the rights[m
+[31m-  to use, copy, modify, merge, publish, distribute, sublicense, and/or sell[m
+[31m-  copies of the Software, and to permit persons to whom the Software is[m
+[31m-  furnished to do so, subject to the following conditions:[m
+[31m-[m
+[31m-  The above copyright notice and this permission notice shall be included in[m
+[31m-  all copies or substantial portions of the Software.[m
+[31m-[m
+[31m-  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR[m
+[31m-  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,[m
+[31m-  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE[m
+[31m-  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER[m
+[31m-  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,[m
+[31m-  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN[m
+[31m-  THE SOFTWARE.[m
+[31m-*/[m
+[31m-[m
+[31m-/* cJSON */[m
+[31m-/* JSON parser in C. */[m
+[31m-[m
+[31m-#include <string.h>[m
+[31m-#include <stdio.h>[m
+[31m-#include <math.h>[m
+[31m-#include <stdlib.h>[m
+[31m-#include <float.h>[m
+[31m-#include <limits.h>[m
+[31m-#include <ctype.h>[m
+[31m-#include "cJSON.h"[m
+[31m-[m
+[31m-/* define our own boolean type */[m
+[31m-typedef int cjbool;[m
+[31m-#define true ((cjbool)1)[m
+[31m-#define false ((cjbool)0)[m
+[31m-[m
+[31m-static const unsigned char *global_ep = NULL;[m
+[31m-[m
+[31m-const char *cJSON_GetErrorPtr(void)[m
+[31m-{[m
+[31m-    return (const char*) global_ep;[m
+[31m-}[m
+[31m-[m
+[31m-/* This is a safeguard to prevent copy-pasters from using incompatible C and header files */[m
+[31m-#if (CJSON_VERSION_MAJOR != 1) || (CJSON_VERSION_MINOR != 3) || (CJSON_VERSION_PATCH != 0)[m
+[31m-    #error cJSON.h and cJSON.c have different versions. Make sure that both have the same.[m
+[31m-#endif[m
+[31m-[m
+[31m-extern const char* cJSON_Version(void)[m
+[31m-{[m
+[31m-    static char version[15];[m
+[31m-    sprintf(version, "%i.%i.%i", CJSON_VERSION_MAJOR, CJSON_VERSION_MINOR, CJSON_VERSION_PATCH);[m
+[31m-[m
+[31m-    return version;[m
+[31m-}[m
+[31m-[m
+[31m-/* case insensitive strcmp */[m
+[31m-static int cJSON_strcasecmp(const unsigned char *s1, const unsigned char *s2)[m
+[31m-{[m
+[31m-    if (!s1)[m
+[31m-    {[m
+[31m-        return (s1 == s2) ? 0 : 1; /* both NULL? */[m
+[31m-    }[m
+[31m-    if (!s2)[m
+[31m-    {[m
+[31m-        return 1;[m
+[31m-    }[m
+[31m-    for(; tolower(*s1) == tolower(*s2); ++s1, ++s2)[m
+[31m-    {[m
+[31m-        if (*s1 == '\0')[m
+[31m-        {[m
+[31m-            return 0;[m
+[31m-        }[m
+[31m-    }[m
+[31m-[m
+[31m-    return tolower(*s1) - tolower(*s2);[m
+[31m-}[m
+[31m-[m
+[31m-static void *(*cJSON_malloc)(size_t sz) = malloc;[m
+[31m-static void (*cJSON_free)(void *ptr) = free;[m
+[31m-[m
+[31m-static unsigned char* cJSON_strdup(const unsigned char* str)[m
+[31m-{[m
+[31m-    size_t len = 0;[m
+[31m-    unsigned char *copy = NULL;[m
+[31m-[m
+[31m-    if (str == NULL)[m
+[31m-    {[m
+[31m-        return NULL;[m
+[31m-    }[m
+[31m-[m
+[31m-    len = strlen((const char*)str) + 1;[m
+[31m-    if (!(copy = (unsigned char*)cJSON_malloc(len)))[m
+[31m-    {[m
+[31m-        return NULL;[m
+[31m-    }[m
+[31m-    memcpy(copy, str, len);[m
+[31m-[m
+[31m-    return copy;[m
+[31m-}[m
+[31m-[m
+[31m-void cJSON_InitHooks(cJSON_Hooks* hooks)[m
+[31m-{[m
+[31m-    if (!hooks)[m
+[31m-    {[m
+[31m-        /* Reset hooks */[m
+[31m-        cJSON_malloc = malloc;[m
+[31m-        cJSON_free = free;[m
+[31m-        return;[m
+[31m-    }[m
+[31m-[m
+[31m-    cJSON_malloc = (hooks->malloc_fn) ? hooks->malloc_fn : malloc;[m
+[31m-    cJSON_free = (hooks->free_fn) ? hooks->free_fn : free;[m
+[31m-}[m
+[31m-[m
+[31m-/* Internal constructor. */[m
+[31m-static cJSON *cJSON_New_Item(void)[m
+[31m-{[m
+[31m-    cJSON* node = (cJSON*)cJSON_malloc(sizeof(cJSON));[m
+[31m-    if (node)[m
+[31m-    {[m
+[31m-        memset(node, '\0', sizeof(cJSON));[m
+[31m-    }[m
+[31m-[m
+[31m-    return node;[m
+[31m-}[m
+[31m-[m
+[31m-/* Delete a cJSON structure. */[m
+[31m-void cJSON_Delete(cJSON *c)[m
+[31m-{[m
+[31m-    cJSON *next = NULL;[m
+[31m-    while (c)[m
+[31m-    {[m
+[31m-        next = c->next;[m
+[31m-        if (!(c->type & cJSON_IsReference) && c->child)[m
+[31m-        {[m
+[31m-            cJSON_Delete(c->child);[m
+[31m-        }[m
+[31m-        if (!(c->type & cJSON_IsReference) && c->valuestring)[m
+[31m-        {[m
+[31m-            cJSON_free(c->valuestring);[m
+[31m-        }[m
+[31m-        if (!(c->type & cJSON_StringIsConst) && c->string)[m
+[31m-        {[m
+[31m-            cJSON_free(c->string);[m
+[31m-        }[m
+[31m-        cJSON_free(c);[m
+[31m-        c = next;[m
+[31m-    }[m
+[31m-}[m
+[31m-[m
+[31m-/* Parse the input text to generate a number, and populate the result into item. */[m
+[31m-static const unsigned char *parse_number(cJSON * const item, const unsigned char * const input)[m
+[31m-{[m
+[31m-    double number = 0;[m
+[31m-    unsigned char *after_end = NULL;[m
+[31m-[m
+[31m-    if (input == NULL)[m
+[31m-    {[m
+[31m-        return NULL;[m
+[31m-    }[m
+[31m-[m
+[31m-    number = strtod((const char*)input, (char**)&after_end);[m
+[31m-    if (input == after_end)[m
+[31m-    {[m
+[31m-        return NULL; /* parse_error */[m
+[31m-    }[m
+[31m-[m
+[31m-    item->valuedouble = number;[m
+[31m-[m
+[31m-    /* use saturation in case of overflow */[m
+[31m-    if (number >= INT_MAX)[m
+[31m-    {[m
+[31m-        item->valueint = INT_MAX;[m
+[31m-    }[m
+[31m-    else if (number <= INT_MIN)[m
+[31m-    {[m
+[31m-        item->valueint = INT_MIN;[m
+[31m-    }[m
+[31m-    else[m
+[31m-    {[m
+[31m-        item->valueint = (int)number;[m
+[31m-    }[m
+[31m-[m
+[31m-    item->type = cJSON_Number;[m
+[31m-[m
+[31m-    return after_end;[m
+[31m-}[m
+[31m-[m
+[31m-/* don't ask me, but the original cJSON_SetNumberValue returns an integer or double */[m
+[31m-double cJSON_SetNumberHelper(cJSON *object, double number)[m
+[31m-{[m
+[31m-    if (number >= INT_MAX)[m
+[31m-    {[m
+[31m-        object->valueint = INT_MAX;[m
+[31m-    }[m
+[31m-    else if (number <= INT_MIN)[m
+[31m-    {[m
+[31m-        object->valueint = INT_MIN;[m
+[31m-    }[m
+[31m-    else[m
+[31m-    {[m
+[31m-        object->valueint = cJSON_Number;[m
+[31m-    }[m
+[31m-[m
+[31m-    return object->valuedouble = number;[m
+[31m-}[m
+[31m-[m
+[31m-typedef struct[m
+[31m-{[m
+[31m-    unsigned char *buffer;[m
+[31m-    size_t length;[m
+[31m-    size_t offset;[m
+[31m-    cjbool noalloc;[m
+[31m-} printbuffer;[m
+[31m-[m
+[31m-/* realloc printbuffer if necessary to have at least "needed" bytes more */[m
+[31m-static unsigned char* ensure(printbuffer *p, size_t needed)[m
+[31m-{[m
+[31m-    unsigned char *newbuffer = NULL;[m
+[31m-    size_t newsize = 0;[m
+[31m-[m
+[31m-    if (needed > INT_MAX)[m
+[31m-    {[m
+[31m-        /* sizes bigger than INT_MAX are currently not supported */[m
+[31m-        return NULL;[m
+[31m-    }[m
+[31m-[m
+[31m-    if (!p || !p->buffer)[m
+[31m-    {[m
+[31m-        return NULL;[m
+[31m-    }[m
+[31m-    needed += p->offset;[m
+[31m-    if (needed <= p->length)[m
+[31m-    {[m
+[31m-        return p->buffer + p->offset;[m
+[31m-    }[m
+[31m-[m
+[31m-    if (p->noalloc) {[m
+[31m-        return NULL;[m
+[31m-    }[m
+[31m-[m
+[31m-    /* calculate new buffer size */[m
+[31m-    newsize = needed * 2;[m
+[31m-    if (newsize > INT_MAX)[m
+[31m-    {[m
+[31m-        /* overflow of int, use INT_MAX if possible */[m
+[31m-        if (needed <= INT_MAX)[m
+[31m-        {[m
+[31m-            newsize = INT_MAX;[m
+[31m-        }[m
+[31m-        else[m
+[31m-        {[m
+[31m-            return NULL;[m
+[31m-        }[m
+[31m-    }[m
+[31m-[m
+[31m-    newbuffer = (unsigned char*)cJSON_malloc(newsize);[m
+[31m-    if (!newbuffer)[m
+[31m-    {[m
+[31m-        cJSON_free(p->buffer);[m
+[31m-        p->length = 0;[m
+[31m-        p->buffer = NULL;[m
+[31m-[m
+[31m-        return NULL;[m
+[31m-    }[m
+[31m-    if (newbuffer)[m
+[31m-    {[m
+[31m-        memcpy(newbuffer, p->buffer, p->length);[m
+[31m-    }[m
+[31m-    cJSON_free(p->buffer);[m
+[31m-    p->length = newsize;[m
+[31m-    p->buffer = newbuffer;[m
+[31m-[m
+[31m-    return newbuffer + p->offset;[m
+[31m-}[m
+[31m-[m
+[31m-/* calculate the new length of the string in a printbuffer */[m
+[31m-static size_t update(const printbuffer *p)[m
+[31m-{[m
+[31m-    const unsigned char *str = NULL;[m
+[31m-    if (!p || !p->buffer)[m
+[31m-    {[m
+[31m-        return 0;[m
+[31m-    }[m
+[31m-    str = p->buffer + p->offset;[m
+[31m-[m
+[31m-    return p->offset + strlen((const char*)str);[m
+[31m-}[m
+[31m-[m
+[31m-/* Render the number nicely from the given item into a string. */[m
+[31m-static unsigned char *print_number(const cJSON *item, printbuffer *p)[m
+[31m-{[m
+[31m-    unsigned char *str = NULL;[m
+[31m-    double d = item->valuedouble;[m
+[31m-    /* special case for 0. */[m
+[31m-    if (d == 0)[m
+[31m-    {[m
+[31m-        if (p)[m
+[31m-        {[m
+[31m-            str = ensure(p, 2);[m
+[31m-        }[m
+[31m-        else[m
+[31m-        {[m
+[31m-            str = (unsigned char*)cJSON_malloc(2);[m
+[31m-        }[m
+[31m-        if (str)[m
+[31m-        {[m
+[31m-            strcpy((char*)str,"0");[m
+[31m-        }[m
+[31m-    }[m
+[31m-    /* value is an int */[m
+[31m-    else if ((fabs(((double)item->valueint) - d) <= DBL_EPSILON) && (d <= INT_MAX) && (d >= INT_MIN))[m
+[31m-    {[m
+[31m-        if (p)[m
+[31m-        {[m
+[31m-            str = ensure(p, 21);[m
+[31m-        }[m
+[31m-        else[m
+[31m-        {[m
+[31m-            /* 2^64+1 can be represented in 21 chars. */[m
+[31m-            str = (unsigned char*)cJSON_malloc(21);[m
+[31m-        }[m
+[31m-        if (str)[m
+[31m-        {[m
+[31m-            sprintf((char*)str, "%d", item->valueint);[m
+[31m-        }[m
+[31m-    }[m
+[31m-    /* value is a floating point number */[m
+[31m-    else[m
+[31m-    {[m
+[31m-        if (p)[m
+[31m-        {[m
+[31m-            /* This is a nice tradeoff. */[m
+[31m-            str = ensure(p, 64);[m
+[31m-        }[m
+[31m-        else[m
+[31m-        {[m
+[31m-            /* This is a nice tradeoff. */[m
+[31m-            str = (unsigned char*)cJSON_malloc(64);[m
+[31m-        }[m
+[31m-        if (str)[m
+[31m-        {[m
+[31m-            /* This checks for NaN and Infinity */[m
+[31m-            if ((d * 0) != 0)[m
+[31m-            {[m
+[31m-                sprintf((char*)str, "null");[m
+[31m-            }[m
+[31m-            else if ((fabs(floor(d) - d) <= DBL_EPSILON) && (fabs(d) < 1.0e60))[m
+[31m-            {[m
+[31m-                sprintf((char*)str, "%.0f", d);[m
+[31m-            }[m
+[31m-            else if ((fabs(d) < 1.0e-6) || (fabs(d) > 1.0e9))[m
+[31m-            {[m
+[31m-                sprintf((char*)str, "%e", d);[m
+[31m-            }[m
+[31m-            else[m
+[31m-            {[m
+[31m-                sprintf((char*)str, "%f", d);[m
+[31m-            }[m
+[31m-        }[m
+[31m-    }[m
+[31m-    return str;[m
+[31m-}[m
+[31m-[m
+[31m-/* parse 4 digit hexadecimal number */[m
+[31m-static unsigned parse_hex4(const unsigned char * const input)[m
+[31m-{[m
+[31m-    unsigned int h = 0;[m
+[31m-    size_t i = 0;[m
+[31m-[m
+[31m-    for (i = 0; i < 4; i++)[m
+[31m-    {[m
+[31m-        /* parse digit */[m
+[31m-        if ((input[i] >= '0') && (input[i] <= '9'))[m
+[31m-        {[m
+[31m-            h += (unsigned int) input[i] - '0';[m
+[31m-        }[m
+[31m-        else if ((input[i] >= 'A') && (input[i] <= 'F'))[m
+[31m-        {[m
+[31m-            h += (unsigned int) 10 + input[i] - 'A';[m
+[31m-        }[m
+[31m-        else if ((input[i] >= 'a') && (input[i] <= 'f'))[m
+[31m-        {[m
+[31m-            h += (unsigned int) 10 + input[i] - 'a';[m
+[31m-        }[m
+[31m-        else /* invalid */[m
+[31m-        {[m
+[31m-            return 0;[m
+[31m-        }[m
+[31m-[m
+[31m-        if (i < 3)[m
+[31m-        {[m
+[31m-            /* shift left to make place for the next nibble */[m
+[31m-            h = h << 4;[m
+[31m-        }[m
+[31m-    }[m
+[31m-[m
+[31m-    return h;[m
+[31m-}[m
+[31m-[m
+[31m-/* converts a UTF-16 literal to UTF-8[m
+[31m- * A literal can be one or two sequences of the form \uXXXX */[m
+[31m-static unsigned char utf16_literal_to_utf8(const unsigned char * const input_pointer, const unsigned char * const input_end, unsigned char **output_pointer, const unsigned char **error_pointer)[m
+[31m-{[m
+[31m-    /* first bytes of UTF8 encoding for a given length in bytes */[m
+[31m-    static const unsigned char firstByteMark[5] =[m
+[31m-    {[m
+[31m-        0x00, /* should never happen */[m
+[31m-        0x00, /* 0xxxxxxx */[m
+[31m-        0xC0, /* 110xxxxx */[m
+[31m-        0xE0, /* 1110xxxx */[m
+[31m-        0xF0 /* 11110xxx */[m
+[31m-    };[m
+[31m-[m
+[31m-    long unsigned int codepoint = 0;[m
+[31m-    unsigned int first_code = 0;[m
+[31m-    const unsigned char *first_sequence = input_pointer;[m
+[31m-    unsigned char utf8_length = 0;[m
+[31m-    unsigned char sequence_length = 0;[m
+[31m-[m
+[31m-    /* get the first utf16 sequence */[m
+[31m-    first_code = parse_hex4(first_sequence + 2);[m
+[31m-    if ((input_end - first_sequence) < 6)[m
+[31m-    {[m
+[31m-        /* input ends unexpectedly */[m
+[31m-        *error_pointer = first_sequence;[m
+[31m-        goto fail;[m
+[31m-    }[m
+[31m-[m
+[31m-    /* check that the code is valid */[m
+[31m-    if (((first_code >= 0xDC00) && (first_code <= 0xDFFF)) || (first_code == 0))[m
+[31m-    {[m
+[31m-        *error_pointer = first_sequence;[m
+[31m-        goto fail;[m
+[31m-    }[m
+[31m-[m
+[31m-    /* UTF16 surrogate pair */[m
+[31m-    if ((first_code >= 0xD800) && (first_code <= 0xDBFF))[m
+[31m-    {[m
+[31m-        const unsigned char *second_sequence = first_sequence + 6;[m
+[31m-        unsigned int second_code = 0;[m
+[31m-        sequence_length = 12; /* \uXXXX\uXXXX */[m
+[31m-[m
+[31m-        if ((input_end - second_sequence) < 6)[m
+[31m-        {[m
+[31m-            /* input ends unexpectedly */[m
+[31m-            *error_pointer = first_sequence;[m
+[31m-            goto fail;[m
+[31m-        }[m
+[31m-[m
+[31m-        if ((second_sequence[0] != '\\') || (second_sequence[1] != 'u'))[m
+[31m-        {[m
+[31m-            /* missing second half of the surrogate pair */[m
+[31m-            *error_pointer = first_sequence;[m
+[31m-            goto fail;[m
+[31m-        }[m
+[31m-[m
+[31m-        /* get the second utf16 sequence */[m
+[31m-        second_code = parse_hex4(second_sequence + 2);[m
+[31m-        /* check that the code is valid */[m
+[31m-        if ((second_code < 0xDC00) || (second_code > 0xDFFF))[m
+[31m-        {[m
+[31m-            /* invalid second half of the surrogate pair */[m
+[31m-            *error_pointer = first_sequence;[m
+[31m-            goto fail;[m
+[31m-        }[m
+[31m-[m
+[31m-[m
+[31m-        /* calculate the unicode codepoint from the surrogate pair */[m
+[31m-        codepoint = 0x10000 + (((first_code & 0x3FF) << 10) | (second_code & 0x3FF));[m
+[31m-    }[m
+[31m-    else[m
+[31m-    {[m
+[31m-        sequence_length = 6; /* \uXXXX */[m
+[31m-        codepoint = first_code;[m
+[31m-    }[m
+[31m-[m
+[31m-    /* encode as UTF-8[m
+[31m-     * takes at maximum 4 bytes to encode:[m
+[31m-     * 11110xxx 10xxxxxx 10xxxxxx 10xxxxxx */[m
+[31m-    if (codepoint < 0x80)[m
+[31m-    {[m
+[31m-        /* normal ascii, encoding 0xxxxxxx */[m
+[31m-        utf8_length = 1;[m
+[31m-    }[m
+[31m-    else if (codepoint < 0x800)[m
+[31m-    {[m
+[31m-        /* two bytes, encoding 110xxxxx 10xxxxxx */[m
+[31m-        utf8_length = 2;[m
+[31m-    }[m
+[31m-    else if (codepoint < 0x10000)[m
+[31m-    {[m
+[31m-        /* three bytes, encoding 1110xxxx 10xxxxxx 10xxxxxx */[m
+[31m-        utf8_length = 3;[m
+[31m-    }[m
+[31m-    else if (codepoint <= 0x10FFFF)[m
+[31m-    {[m
+[31m-        /* four bytes, encoding 1110xxxx 10xxxxxx 10xxxxxx 10xxxxxx */[m
+[31m-        utf8_length = 4;[m
+[31m-    }[m
+[31m-    else[m
+[31m-    {[m
+[31m-        /* invalid unicode codepoint */[m
+[31m-        *error_pointer = first_sequence;[m
+[31m-        goto fail;[m
+[31m-    }[m
+[31m-[m
+[31m-    /* encode as utf8 */[m
+[31m-    switch (utf8_length)[m
+[31m-    {[m
+[31m-        case 4:[m
+[31m-            /* 10xxxxxx */[m
+[31m-            (*output_pointer)[3] = (unsigned char)((codepoint | 0x80) & 0xBF);[m
+[31m-            codepoint >>= 6;[m
+[31m-        case 3:[m
+[31m-            /* 10xxxxxx */[m
+[31m-            (*output_pointer)[2] = (unsigned char)((codepoint | 0x80) & 0xBF);[m
+[31m-            codepoint >>= 6;[m
+[31m-        case 2:[m
+[31m-            (*output_pointer)[1] = (unsigned char)((codepoint | 0x80) & 0xBF);[m
+[31m-            codepoint >>= 6;[m
+[31m-        case 1:[m
+[31m-            /* depending on the length in bytes this determines the[m
+[31m-               encoding of the first UTF8 byte */[m
+[31m-            (*output_pointer)[0] = (unsigned char)((codepoint | firstByteMark[utf8_length]) & 0xFF);[m
+[31m-            break;[m
+[31m-        default:[m
+[31m-            *error_pointer = first_sequence;[m
+[31m-            goto fail;[m
+[31m-    }[m
+[31m-    *output_pointer += utf8_length;[m
+[31m-[m
+[31m-    return sequence_length;[m
+[31m-[m
+[31m-fail:[m
+[31m-    return 0;[m
+[31m-}[m
+[31m-[m
+[31m-/* Parse the input text into an unescaped cinput, and populate item. */[m
+[31m-static const unsigned char *parse_string(cJSON * const item, const unsigned char * const input, const unsigned char ** const error_pointer)[m
+[31m-{[m
+[31m-    const unsigned char *input_pointer = input + 1;[m
+[31m-    const unsigned char *input_end = input + 1;[m
+[31m-    unsigned char *output_pointer = NULL;[m
+[31m-    unsigned char *output = NULL;[m
+[31m-[m
+[31m-    /* not a string */[m
+[31m-    if (*input != '\"')[m
+[31m-    {[m
+[31m-        *error_pointer = input;[m
+[31m-        goto fail;[m
+[31m-    }[m
+[31m-[m
+[31m-    {[m
+[31m-        /* calculate approximate size of the output (overestimate) */[m
+[31m-        size_t allocation_length = 0;[m
+[31m-        size_t skipped_bytes = 0;[m
+[31m-        while ((*input_end != '\"') && (*input_end != '\0'))[m
+[31m-        {[m
+[31m-            /* is escape sequence */[m
+[31m-            if (input_end[0] == '\\')[m
+[31m-            {[m
+[31m-                if (input_end[1] == '\0')[m
+[31m-                {[m
+[31m-                    /* prevent buffer overflow when last input character is a backslash */[m
+[31m-                    goto fail;[m
+[31m-                }[m
+[31m-                skipped_bytes++;[m
+[31m-                input_end++;[m
+[31m-            }[m
+[31m-            input_end++;[m
+[31m-        }[m
+[31m-        if (*input_end == '\0')[m
+[31m-        {[m
+[31m-            goto fail; /* string ended unexpectedly */[m
+[31m-        }[m
+[31m-[m
+[31m-        /* This is at most how much we need for the output */[m
+[31m-        allocation_length = (size_t) (input_end - input) - skipped_bytes;[m
+[31m-        output = (unsigned char*)cJSON_malloc(allocation_length + sizeof('\0'));[m
+[31m-        if (output == NULL)[m
+[31m-        {[m
+[31m-            goto fail; /* allocation failure */[m
+[31m-        }[m
+[31m-    }[m
+[31m-[m
+[31m-    output_pointer = output;[m
+[31m-    /* loop through the string literal */[m
+[31m-    while (input_pointer < input_end)[m
+[31m-    {[m
+[31m-        if (*input_pointer != '\\')[m
+[31m-        {[m
+[31m-            *output_pointer++ = *input_pointer++;[m
+[31m-        }[m
+[31m-        /* escape sequence */[m
+[31m-        else[m
+[31m-        {[m
+[31m-            unsigned char sequence_length = 2;[m
+[31m-            switch (input_pointer[1])[m
+[31m-            {[m
+[31m-                case 'b':[m
+[31m-                    *output_pointer++ = '\b';[m
+[31m-                    break;[m
+[31m-                case 'f':[m
+[31m-                    *output_pointer++ = '\f';[m
+[31m-                    break;[m
+[31m-                case 'n':[m
+[31m-                    *output_pointer++ = '\n';[m
+[31m-                    break;[m
+[31m-                case 'r':[m
+[31m-                    *output_pointer++ = '\r';[m
+[31m-                    break;[m
+[31m-                case 't':[m
+[31m-                    *output_pointer++ = '\t';[m
+[31m-                    break;[m
+[31m-                case '\"':[m
+[31m-                case '\\':[m
+[31m-                case '/':[m
+[31m-                    *output_pointer++ = input_pointer[1];[m
+[31m-                    break;[m
+[31m-[m
+[31m-                /* UTF-16 literal */[m
+[31m-                case 'u':[m
+[31m-                    sequence_length = utf16_literal_to_utf8(input_pointer, input_end, &output_pointer, error_pointer);[m
+[31m-                    if (sequence_length == 0)[m
+[31m-                    {[m
+[31m-                        /* failed to convert UTF16-literal to UTF-8 */[m
+[31m-                        goto fail;[m
+[31m-                    }[m
+[31m-                    break;[m
+[31m-[m
+[31m-                default:[m
+[31m-                    *error_pointer = input_pointer;[m
+[31m-                    goto fail;[m
+[31m-            }[m
+[31m-            input_pointer += sequence_length;[m
+[31m-        }[m
+[31m-    }[m
+[31m-[m
+[31m-    /* zero terminate the output */[m
+[31m-    *output_pointer = '\0';[m
+[31m-[m
+[31m-    item->type = cJSON_String;[m
+[31m-    item->valuestring = (char*)output;[m
+[31m-[m
+[31m-    return input_end + 1;[m
+[31m-[m
+[31m-fail:[m
+[31m-    if (output != NULL)[m
+[31m-    {[m
+[31m-        cJSON_free(output);[m
+[31m-    }[m
+[31m-[m
+[31m-    return NULL;[m
+[31m-}[m
+[31m-[m
+[31m-/* Render the cstring provided to an escaped version that can be printed. */[m
+[31m-static unsigned char *print_string_ptr(const unsigned char *str, printbuffer *p)[m
+[31m-{[m
+[31m-    const unsigned char *ptr = NULL;[m
+[31m-    unsigned char *ptr2 = NULL;[m
+[31m-    unsigned char *out = NULL;[m
+[31m-    size_t len = 0;[m
+[31m-    cjbool flag = false;[m
+[31m-    unsigned char token = '\0';[m
+[31m-[m
+[31m-    /* empty string */[m
+[31m-    if (!str)[m
+[31m-    {[m
+[31m-        if (p)[m
+[31m-        {[m
+[31m-            out = ensure(p, 3);[m
+[31m-        }[m
+[31m-        else[m
+[31m-        {[m
+[31m-            out = (unsigned char*)cJSON_malloc(3);[m
+[31m-        }[m
+[31m-        if (!out)[m
+[31m-        {[m
+[31m-            return NULL;[m
+[31m-        }[m
+[31m-        strcpy((char*)out, "\"\"");[m
+[31m-[m
+[31m-        return out;[m
+[31m-    }[m
+[31m-[m
+[31m-    /* set "flag" to 1 if something needs to be escaped */[m
+[31m-    for (ptr = str; *ptr; ptr++)[m
+[31m-    {[m
+[31m-        flag |= (((*ptr > 0) && (*ptr < 32)) /* unprintable characters */[m
+[31m-                || (*ptr == '\"') /* double quote */[m
+[31m-                || (*ptr == '\\')) /* backslash */[m
+[31m-            ? 1[m
+[31m-            : 0;[m
+[31m-    }[m
+[31m-    /* no characters have to be escaped */[m
+[31m-    if (!flag)[m
+[31m-    {[m
+[31m-        len = (size_t)(ptr - str);[m
+[31m-        if (p)[m
+[31m-        {[m
+[31m-            out = ensure(p, len + 3);[m
+[31m-        }[m
+[31m-        else[m
+[31m-        {[m
+[31m-            out = (unsigned char*)cJSON_malloc(len + 3);[m
+[31m-        }[m
+[31m-        if (!out)[m
+[31m-        {[m
+[31m-            return NULL;[m
+[31m-        }[m
+[31m-[m
+[31m-        ptr2 = out;[m
+[31m-        *ptr2++ = '\"';[m
+[31m-        strcpy((char*)ptr2, (const char*)str);[m
+[31m-        ptr2[len] = '\"';[m
+[31m-        ptr2[len + 1] = '\0';[m
+[31m-[m
+[31m-        return out;[m
+[31m-    }[m
+[31m-[m
+[31m-    ptr = str;[m
+[31m-    /* calculate additional space that is needed for escaping */[m
+[31m-    while ((token = *ptr))[m
+[31m-    {[m
+[31m-        ++len;[m
+[31m-        if (strchr("\"\\\b\f\n\r\t", token))[m
+[31m-        {[m
+[31m-            len++; /* +1 for the backslash */[m
+[31m-        }[m
+[31m-        else if (token < 32)[m
+[31m-        {[m
+[31m-            len += 5; /* +5 for \uXXXX */[m
+[31m-        }[m
+[31m-        ptr++;[m
+[31m-    }[m
+[31m-[m
+[31m-    if (p)[m
+[31m-    {[m
+[31m-        out = ensure(p, len + 3);[m
+[31m-    }[m
+[31m-    else[m
+[31m-    {[m
+[31m-        out = (unsigned char*)cJSON_malloc(len + 3);[m
+[31m-    }[m
+[31m-    if (!out)[m
+[31m-    {[m
+[31m-        return NULL;[m
+[31m-    }[m
+[31m-[m
+[31m-    ptr2 = out;[m
+[31m-    ptr = str;[m
+[31m-    *ptr2++ = '\"';[m
+[31m-    /* copy the string */[m
+[31m-    while (*ptr)[m
+[31m-    {[m
+[31m-        if ((*ptr > 31) && (*ptr != '\"') && (*ptr != '\\'))[m
+[31m-        {[m
+[31m-            /* normal character, copy */[m
+[31m-            *ptr2++ = *ptr++;[m
+[31m-        }[m
+[31m-        else[m
+[31m-        {[m
+[31m-            /* character needs to be escaped */[m
+[31m-            *ptr2++ = '\\';[m
+[31m-            switch (token = *ptr++)[m
+[31m-            {[m
+[31m-                case '\\':[m
+[31m-                    *ptr2++ = '\\';[m
+[31m-                    break;[m
+[31m-                case '\"':[m
+[31m-                    *ptr2++ = '\"';[m
+[31m-                    break;[m
+[31m-                case '\b':[m
+[31m-                    *ptr2++ = 'b';[m
+[31m-                    break;[m
+[31m-                case '\f':[m
+[31m-                    *ptr2++ = 'f';[m
+[31m-                    break;[m
+[31m-                case '\n':[m
+[31m-                    *ptr2++ = 'n';[m
+[31m-                    break;[m
+[31m-                case '\r':[m
+[31m-                    *ptr2++ = 'r';[m
+[31m-                    break;[m
+[31m-                case '\t':[m
+[31m-                    *ptr2++ = 't';[m
+[31m-                    break;[m
+[31m-                default:[m
+[31m-                    /* escape and print as unicode codepoint */[m
+[31m-                    sprintf((char*)ptr2, "u%04x", token);[m
+[31m-                    ptr2 += 5;[m
+[31m-                    break;[m
+[31m-            }[m
+[31m-        }[m
+[31m-    }[m
+[31m-    *ptr2++ = '\"';[m
+[31m-    *ptr2++ = '\0';[m
+[31m-[m
+[31m-    return out;[m
+[31m-}[m
+[31m-[m
+[31m-/* Invoke print_string_ptr (which is useful) on an item. */[m
+[31m-static unsigned char *print_string(const cJSON *item, printbuffer *p)[m
+[31m-{[m
+[31m-    return print_string_ptr((unsigned char*)item->valuestring, p);[m
+[31m-}[m
+[31m-[m
+[31m-/* Predeclare these prototypes. */[m
+[31m-static const unsigned char *parse_value(cJSON * const item, const unsigned char * const input, const unsigned char ** const ep);[m
+[31m-static unsigned char *print_value(const cJSON *item, size_t depth, cjbool fmt, printbuffer *p);[m
+[31m-static const unsigned char *parse_array(cJSON * const item, const unsigned char *input, const unsigned char ** const ep);[m
+[31m-static unsigned char *print_array(const cJSON *item, size_t depth, cjbool fmt, printbuffer *p);[m
+[31m-static const unsigned char *parse_object(cJSON * const item, const unsigned char *input, const unsigned char ** const ep);[m
+[31m-static unsigned char *print_object(const cJSON *item, size_t depth, cjbool fmt, printbuffer *p);[m
+[31m-[m
+[31m-/* Utility to jump whitespace and cr/lf */[m
+[31m-static const unsigned char *skip(const unsigned char *in)[m
+[31m-{[m
+[31m-    while (in && *in && (*in <= 32))[m
+[31m-    {[m
+[31m-        in++;[m
+[31m-    }[m
+[31m-[m
+[31m-    return in;[m
+[31m-}[m
+[31m-[m
+[31m-/* Parse an object - create a new root, and populate. */[m
+[31m-cJSON *cJSON_ParseWithOpts(const char *value, const char **return_parse_end, cjbool require_null_terminated)[m
+[31m-{[m
+[31m-    const unsigned char *end = NULL;[m
+[31m-    /* use global error pointer if no specific one was given */[m
+[31m-    const unsigned char **ep = return_parse_end ? (const unsigned char**)return_parse_end : &global_ep;[m
+[31m-    cJSON *c = cJSON_New_Item();[m
+[31m-    *ep = NULL;[m
+[31m-    if (!c) /* memory fail */[m
+[31m-    {[m
+[31m-        return NULL;[m
+[31m-    }[m
+[31m-[m
+[31m-    end = parse_value(c, skip((const unsigned char*)value), ep);[m
+[31m-    if (!end)[m
+[31m-    {[m
+[31m-        /* parse failure. ep is set. */[m
+[31m-        cJSON_Delete(c);[m
+[31m-        return NULL;[m
+[31m-    }[m
+[31m-[m
+[31m-    /* if we require null-terminated JSON without appended garbage, skip and then check for a null terminator */[m
+[31m-    if (require_null_terminated)[m
+[31m-    {[m
+[31m-        end = skip(end);[m
+[31m-        if (*end)[m
+[31m-        {[m
+[31m-            cJSON_Delete(c);[m
+[31m-            *ep = end;[m
+[31m-            return NULL;[m
+[31m-        }[m
+[31m-    }[m
+[31m-    if (return_parse_end)[m
+[31m-    {[m
+[31m-        *return_parse_end = (const char*)end;[m
+[31m-    }[m
+[31m-[m
+[31m-    return c;[m
+[31m-}[m
+[31m-[m
+[31m-/* Default options for cJSON_Parse */[m
+[31m-cJSON *cJSON_Parse(const char *value)[m
+[31m-{[m
+[31m-    return cJSON_ParseWithOpts(value, 0, 0);[m
+[31m-}[m
+[31m-[m
+[31m-/* Render a cJSON item/entity/structure to text. */[m
+[31m-char *cJSON_Print(const cJSON *item)[m
+[31m-{[m
+[31m-    return (char*)print_value(item, 0, 1, 0);[m
+[31m-}[m
+[31m-[m
+[31m-char *cJSON_PrintUnformatted(const cJSON *item)[m
+[31m-{[m
+[31m-    return (char*)print_value(item, 0, 0, 0);[m
+[31m-}[m
+[31m-[m
+[31m-char *cJSON_PrintBuffered(const cJSON *item, int prebuffer, cjbool fmt)[m
+[31m-{[m
+[31m-    printbuffer p;[m
+[31m-[m
+[31m-    if (prebuffer < 0)[m
+[31m-    {[m
+[31m-        return NULL;[m
+[31m-    }[m
+[31m-[m
+[31m-    p.buffer = (unsigned char*)cJSON_malloc((size_t)prebuffer);[m
+[31m-    if (!p.buffer)[m
+[31m-    {[m
+[31m-        return NULL;[m
+[31m-    }[m
+[31m-[m
+[31m-    p.length = (size_t)prebuffer;[m
+[31m-    p.offset = 0;[m
+[31m-    p.noalloc = false;[m
+[31m-[m
+[31m-    return (char*)print_value(item, 0, fmt, &p);[m
+[31m-}[m
+[31m-[m
+[31m-int cJSON_PrintPreallocated(cJSON *item, char *buf, const int len, const cjbool fmt)[m
+[31m-{[m
+[31m-    printbuffer p;[m
+[31m-[m
+[31m-    if (len < 0)[m
+[31m-    {[m
+[31m-        return false;[m
+[31m-    }[m
+[31m-[m
+[31m-    p.buffer = (unsigned char*)buf;[m
+[31m-    p.length = (size_t)len;[m
+[31m-    p.offset = 0;[m
+[31m-    p.noalloc = true;[m
+[31m-    return print_value(item, 0, fmt, &p) != NULL;[m
+[31m-}[m
+[31m-[m
+[31m-/* Parser core - when encountering text, process appropriately. */[m
+[31m-static const unsigned  char *parse_value(cJSON * const item, const unsigned char * const input, const unsigned char ** const error_pointer)[m
+[31m-{[m
+[31m-    if (input == NULL)[m
+[31m-    {[m
+[31m-        return NULL; /* no input */[m
+[31m-    }[m
+[31m-[m
+[31m-    /* parse the different types of values */[m
+[31m-    /* null */[m
+[31m-    if (!strncmp((const char*)input, "null", 4))[m
+[31m-    {[m
+[31m-        item->type = cJSON_NULL;[m
+[31m-        return input + 4;[m
+[31m-    }[m
+[31m-    /* false */[m
+[31m-    if (!strncmp((const char*)input, "false", 5))[m
+[31m-    {[m
+[31m-        item->type = cJSON_False;[m
+[31m-        return input + 5;[m
+[31m-    }[m
+[31m-    /* true */[m
+[31m-    if (!strncmp((const char*)input, "true", 4))[m
+[31m-    {[m
+[31m-        item->type = cJSON_True;[m
+[31m-        item->valueint = 1;[m
+[31m-        return input + 4;[m
+[31m-    }[m
+[31m-    /* string */[m
+[31m-    if (*input == '\"')[m
+[31m-    {[m
+[31m-        return parse_string(item, input, error_pointer);[m
+[31m-    }[m
+[31m-    /* number */[m
+[31m-    if ((*input == '-') || ((*input >= '0') && (*input <= '9')))[m
+[31m-    {[m
+[31m-        return parse_number(item, input);[m
+[31m-    }[m
+[31m-    /* array */[m
+[31m-    if (*input == '[')[m
+[31m-    {[m
+[31m-        return parse_array(item, input, error_pointer);[m
+[31m-    }[m
+[31m-    /* object */[m
+[31m-    if (*input == '{')[m
+[31m-    {[m
+[31m-        return parse_object(item, input, error_pointer);[m
+[31m-    }[m
+[31m-[m
+[31m-    /* failure. */[m
+[31m-    *error_pointer = input;[m
+[31m-    return NULL;[m
+[31m-}[m
+[31m-[m
+[31m-/* Render a value to text. */[m
+[31m-static unsigned char *print_value(const cJSON *item, size_t depth, cjbool fmt, printbuffer *p)[m
+[31m-{[m
+[31m-    unsigned char *out = NULL;[m
+[31m-[m
+[31m-    if (!item)[m
+[31m-    {[m
+[31m-        return NULL;[m
+[31m-    }[m
+[31m-    if (p)[m
+[31m-    {[m
+[31m-        switch ((item->type) & 0xFF)[m
+[31m-        {[m
+[31m-            case cJSON_NULL:[m
+[31m-                out = ensure(p, 5);[m
+[31m-                if (out)[m
+[31m-                {[m
+[31m-                    strcpy((char*)out, "null");[m
+[31m-                }[m
+[31m-                break;[m
+[31m-            case cJSON_False:[m
+[31m-                out = ensure(p, 6);[m
+[31m-                if (out)[m
+[31m-                {[m
+[31m-                    strcpy((char*)out, "false");[m
+[31m-                }[m
+[31m-                break;[m
+[31m-            case cJSON_True:[m
+[31m-                out = ensure(p, 5);[m
+[31m-                if (out)[m
+[31m-                {[m
+[31m-                    strcpy((char*)out, "true");[m
+[31m-                }[m
+[31m-                break;[m
+[31m-            case cJSON_Number:[m
+[31m-                out = print_number(item, p);[m
+[31m-                break;[m
+[31m-            case cJSON_Raw:[m
+[31m-            {[m
+[31m-                size_t raw_length = 0;[m
+[31m-                if (item->valuestring == NULL)[m
+[31m-                {[m
+[31m-                    if (!p->noalloc)[m
+[31m-                    {[m
+[31m-                        cJSON_free(p->buffer);[m
+[31m-                    }[m
+[31m-                    out = NULL;[m
+[31m-                    break;[m
+[31m-                }[m
+[31m-[m
+[31m-                raw_length = strlen(item->valuestring) + sizeof('\0');[m
+[31m-                out = ensure(p, raw_length);[m
+[31m-                if (out)[m
+[31m-                {[m
+[31m-                    memcpy(out, item->valuestring, raw_length);[m
+[31m-                }[m
+[31m-                break;[m
+[31m-            }[m
+[31m-            case cJSON_String:[m
+[31m-                out = print_string(item, p);[m
+[31m-                break;[m
+[31m-            case cJSON_Array:[m
+[31m-                out = print_array(item, depth, fmt, p);[m
+[31m-                break;[m
+[31m-            case cJSON_Object:[m
+[31m-                out = print_object(item, depth, fmt, p);[m
+[31m-                break;[m
+[31m-            default:[m
+[31m-                out = NULL;[m
+[31m-                break;[m
+[31m-        }[m
+[31m-    }[m
+[31m-    else[m
+[31m-    {[m
+[31m-        switch ((item->type) & 0xFF)[m
+[31m-        {[m
+[31m-            case cJSON_NULL:[m
+[31m-                out = cJSON_strdup((const unsigned char*)"null");[m
+[31m-                break;[m
+[31m-            case cJSON_False:[m
+[31m-                out = cJSON_strdup((const unsigned char*)"false");[m
+[31m-                break;[m
+[31m-            case cJSON_True:[m
+[31m-                out = cJSON_strdup((const unsigned char*)"true");[m
+[31m-                break;[m
+[31m-            case cJSON_Number:[m
+[31m-                out = print_number(item, 0);[m
+[31m-                break;[m
+[31m-            case cJSON_Raw:[m
+[31m-                out = cJSON_strdup((unsigned char*)item->valuestring);[m
+[31m-                break;[m
+[31m-            case cJSON_String:[m
+[31m-                out = print_string(item, 0);[m
+[31m-                break;[m
+[31m-            case cJSON_Array:[m
+[31m-                out = print_array(item, depth, fmt, 0);[m
+[31m-                break;[m
+[31m-            case cJSON_Object:[m
+[31m-                out = print_object(item, depth, fmt, 0);[m
+[31m-                break;[m
+[31m-            default:[m
+[31m-                out = NULL;[m
+[31m-                break;[m
+[31m-        }[m
+[31m-    }[m
+[31m-[m
+[31m-    return out;[m
+[31m-}[m
+[31m-[m
+[31m-/* Build an array from input text. */[m
+[31m-static const unsigned char *parse_array(cJSON * const item, const unsigned char *input, const unsigned char ** const error_pointer)[m
+[31m-{[m
+[31m-    cJSON *head = NULL; /* head of the linked list */[m
+[31m-    cJSON *current_item = NULL;[m
+[31m-[m
+[31m-    if (*input != '[')[m
+[31m-    {[m
+[31m-        /* not an array */[m
+[31m-        *error_pointer = input;[m
+[31m-        goto fail;[m
+[31m-    }[m
+[31m-[m
+[31m-    input = skip(input + 1); /* skip whitespace */[m
+[31m-    if (*input == ']')[m
+[31m-    {[m
+[31m-        /* empty array */[m
+[31m-        goto success;[m
+[31m-    }[m
+[31m-[m
+[31m-    /* step back to character in front of the first element */[m
+[31m-    input--;[m
+[31m-    /* loop through the comma separated array elements */[m
+[31m-    do[m
+[31m-    {[m
+[31m-        /* allocate next item */[m
+[31m-        cJSON *new_item = cJSON_New_Item();[m
+[31m-        if (new_item == NULL)[m
+[31m-        {[m
+[31m-            goto fail; /* allocation failure */[m
+[31m-        }[m
+[31m-[m
+[31m-        /* attach next item to list */[m
+[31m-        if (head == NULL)[m
+[31m-        {[m
+[31m-            /* start the linked list */[m
+[31m-            current_item = head = new_item;[m
+[31m-        }[m
+[31m-        else[m
+[31m-        {[m
+[31m-            /* add to the end and advance */[m
+[31m-            current_item->next = new_item;[m
+[31m-            new_item->prev = current_item;[m
+[31m-            current_item = new_item;[m
+[31m-        }[m
+[31m-[m
+[31m-        /* parse next value */[m
+[31m-        input = skip(input + 1); /* skip whitespace before value */[m
+[31m-        input = parse_value(current_item, input, error_pointer);[m
+[31m-        input = skip(input); /* skip whitespace after value */[m
+[31m-        if (input == NULL)[m
+[31m-        {[m
+[31m-            goto fail; /* failed to parse value */[m
+[31m-        }[m
+[31m-    }[m
+[31m-    while (*input == ',');[m
+[31m-[m
+[31m-    if (*input != ']')[m
+[31m-    {[m
+[31m-        *error_pointer = input;[m
+[31m-        goto fail; /* expected end of array */[m
+[31m-    }[m
+[31m-[m
+[31m-success:[m
+[31m-    item->type = cJSON_Array;[m
+[31m-    item->child = head;[m
+[31m-[m
+[31m-    return input + 1;[m
+[31m-[m
+[31m-fail:[m
+[31m-    if (head != NULL)[m
+[31m-    {[m
+[31m-        cJSON_Delete(head);[m
+[31m-    }[m
+[31m-[m
+[31m-    return NULL;[m
+[31m-}[m
+[31m-[m
+[31m-/* Render an array to text */[m
+[31m-static unsigned char *print_array(const cJSON *item, size_t depth, cjbool fmt, printbuffer *p)[m
+[31m-{[m
+[31m-    unsigned char **entries;[m
+[31m-    unsigned char *out = NULL;[m
+[31m-    unsigned char *ptr = NULL;[m
+[31m-    unsigned char *ret = NULL;[m
+[31m-    size_t len = 5;[m
+[31m-    cJSON *child = item->child;[m
+[31m-    size_t numentries = 0;[m
+[31m-    size_t i = 0;[m
+[31m-    cjbool fail = false;[m
+[31m-    size_t tmplen = 0;[m
+[31m-[m
+[31m-    /* How many entries in the array? */[m
+[31m-    while (child)[m
+[31m-    {[m
+[31m-        numentries++;[m
+[31m-        child = child->next;[m
+[31m-    }[m
+[31m-[m
+[31m-    /* Explicitly handle numentries == 0 */[m
+[31m-    if (!numentries)[m
+[31m-    {[m
+[31m-        if (p)[m
+[31m-        {[m
+[31m-            out = ensure(p, 3);[m
+[31m-        }[m
+[31m-        else[m
+[31m-        {[m
+[31m-            out = (unsigned char*)cJSON_malloc(3);[m
+[31m-        }[m
+[31m-        if (out)[m
+[31m-        {[m
+[31m-            strcpy((char*)out, "[]");[m
+[31m-        }[m
+[31m-[m
+[31m-        return out;[m
+[31m-    }[m
+[31m-[m
+[31m-    if (p)[m
+[31m-    {[m
+[31m-        /* Compose the output array. */[m
+[31m-        /* opening square bracket */[m
+[31m-        i = p->offset;[m
+[31m-        ptr = ensure(p, 1);[m
+[31m-        if (!ptr)[m
+[31m-        {[m
+[31m-            return NULL;[m
+[31m-        }[m
+[31m-        *ptr = '[';[m
+[31m-        p->offset++;[m
+[31m-[m
+[31m-        child = item->child;[m
+[31m-        while (child && !fail)[m
+[31m-        {[m
+[31m-            if (!print_value(child, depth + 1, fmt, p))[m
+[31m-            {[m
+[31m-                return NULL;[m
+[31m-            }[m
+[31m-            p->offset = update(p);[m
+[31m-            if (child->next)[m
+[31m-            {[m
+[31m-                len = fmt ? 2 : 1;[m
+[31m-                ptr = ensure(p, len + 1);[m
+[31m-                if (!ptr)[m
+[31m-                {[m
+[31m-                    return NULL;[m
+[31m-                }[m
+[31m-                *ptr++ = ',';[m
+[31m-                if(fmt)[m
+[31m-                {[m
+[31m-                    *ptr++ = ' ';[m
+[31m-                }[m
+[31m-                *ptr = '\0';[m
+[31m-                p->offset += len;[m
+[31m-            }[m
+[31m-            child = child->next;[m
+[31m-        }[m
+[31m-        ptr = ensure(p, 2);[m
+[31m-        if (!ptr)[m
+[31m-        {[m
+[31m-            return NULL;[m
+[31m-        }[m
+[31m-        *ptr++ = ']';[m
+[31m-        *ptr = '\0';[m
+[31m-        out = (p->buffer) + i;[m
+[31m-    }[m
+[31m-    else[m
+[31m-    {[m
+[31m-        /* Allocate an array to hold the pointers to all printed values */[m
+[31m-        entries = (unsigned char**)cJSON_malloc(numentries * sizeof(unsigned char*));[m
+[31m-        if (!entries)[m
+[31m-        {[m
+[31m-            return NULL;[m
+[31m-        }[m
+[31m-        memset(entries, '\0', numentries * sizeof(unsigned char*));[m
+[31m-[m
+[31m-        /* Retrieve all the results: */[m
+[31m-        child = item->child;[m
+[31m-        while (child && !fail)[m
+[31m-        {[m
+[31m-            ret = print_value(child, depth + 1, fmt, 0);[m
+[31m-            entries[i++] = ret;[m
+[31m-            if (ret)[m
+[31m-            {[m
+[31m-                len += strlen((char*)ret) + 2 + (fmt ? 1 : 0);[m
+[31m-            }[m
+[31m-            else[m
+[31m-            {[m
+[31m-                fail = true;[m
+[31m-            }[m
+[31m-            child = child->next;[m
+[31m-        }[m
+[31m-[m
+[31m-        /* If we didn't fail, try to malloc the output string */[m
+[31m-        if (!fail)[m
+[31m-        {[m
+[31m-            out = (unsigned char*)cJSON_malloc(len);[m
+[31m-        }[m
+[31m-        /* If that fails, we fail. */[m
+[31m-        if (!out)[m
+[31m-        {[m
+[31m-            fail = true;[m
+[31m-        }[m
+[31m-[m
+[31m-        /* Handle failure. */[m
+[31m-        if (fail)[m
+[31m-        {[m
+[31m-            /* free all the entries in the array */[m
+[31m-            for (i = 0; i < numentries; i++)[m
+[31m-            {[m
+[31m-                if (entries[i])[m
+[31m-                {[m
+[31m-                    cJSON_free(entries[i]);[m
+[31m-                }[m
+[31m-            }[m
+[31m-            cJSON_free(entries);[m
+[31m-            return NULL;[m
+[31m-        }[m
+[31m-[m
+[31m-        /* Compose the output array. */[m
+[31m-        *out='[';[m
+[31m-        ptr = out + 1;[m
+[31m-        *ptr = '\0';[m
+[31m-        for (i = 0; i < numentries; i++)[m
+[31m-        {[m
+[31m-            tmplen = strlen((char*)entries[i]);[m
+[31m-            memcpy(ptr, entries[i], tmplen);[m
+[31m-            ptr += tmplen;[m
+[31m-            if (i != (numentries - 1))[m
+[31m-            {[m
+[31m-                *ptr++ = ',';[m
+[31m-                if(fmt)[m
+[31m-                {[m
+[31m-                    *ptr++ = ' ';[m
+[31m-                }[m
+[31m-                *ptr = '\0';[m
+[31m-            }[m
+[31m-            cJSON_free(entries[i]);[m
+[31m-        }[m
+[31m-        cJSON_free(entries);[m
+[31m-        *ptr++ = ']';[m
+[31m-        *ptr++ = '\0';[m
+[31m-    }[m
+[31m-[m
+[31m-    return out;[m
+[31m-}[m
+[31m-[m
+[31m-/* Build an object from the text. */[m
+[31m-static const unsigned char *parse_object(cJSON * const item, const unsigned char *input, const unsigned char ** const error_pointer)[m
+[31m-{[m
+[31m-    cJSON *head = NULL; /* linked list head */[m
+[31m-    cJSON *current_item = NULL;[m
+[31m-[m
+[31m-    if (*input != '{')[m
+[31m-    {[m
+[31m-        *error_pointer = input;[m
+[31m-        goto fail; /* not an object */[m
+[31m-    }[m
+[31m-[m
+[31m-    input = skip(input + 1); /* skip whitespace */[m
+[31m-    if (*input == '}')[m
+[31m-    {[m
+[31m-        goto success; /* empty object */[m
+[31m-    }[m
+[31m-[m
+[31m-    /* step back to character in front of the first element */[m
+[31m-    input--;[m
+[31m-    /* loop through the comma separated array elements */[m
+[31m-    do[m
+[31m-    {[m
+[31m-        /* allocate next item */[m
+[31m-        cJSON *new_item = cJSON_New_Item();[m
+[31m-        if (new_item == NULL)[m
+[31m-        {[m
+[31m-            goto fail; /* allocation failure */[m
+[31m-        }[m
+[31m-[m
+[31m-        /* attach next item to list */[m
+[31m-        if (head == NULL)[m
+[31m-        {[m
+[31m-            /* start the linked list */[m
+[31m-            current_item = head = new_item;[m
+[31m-        }[m
+[31m-        else[m
+[31m-        {[m
+[31m-            /* add to the end and advance */[m
+[31m-            current_item->next = new_item;[m
+[31m-            new_item->prev = current_item;[m
+[31m-            current_item = new_item;[m
+[31m-        }[m
+[31m-[m
+[31m-        /* parse the name of the child */[m
+[31m-        input = skip(input + 1); /* skip whitespaces before name */[m
+[31m-        input = parse_string(current_item, input, error_pointer);[m
+[31m-        input = skip(input); /* skip whitespaces after name */[m
+[31m-        if (input == NULL)[m
+[31m-        {[m
+[31m-            goto fail; /* faile to parse name */[m
+[31m-        }[m
+[31m-[m
+[31m-        /* swap valuestring and string, because we parsed the name */[m
+[31m-        current_item->string = current_item->valuestring;[m
+[31m-        current_item->valuestring = NULL;[m
+[31m-[m
+[31m-        if (*input != ':')[m
+[31m-        {[m
+[31m-            *error_pointer = input;[m
+[31m-            goto fail; /* invalid object */[m
+[31m-        }[m
+[31m-[m
+[31m-        /* parse the value */[m
+[31m-        input = skip(input + 1); /* skip whitespaces before value */[m
+[31m-        input = parse_value(current_item, input, error_pointer);[m
+[31m-        input = skip(input); /* skip whitespaces after the value */[m
+[31m-        if (input == NULL)[m
+[31m-        {[m
+[31m-            goto fail; /* failed to parse value */[m
+[31m-        }[m
+[31m-    }[m
+[31m-    while (*input == ',');[m
+[31m-[m
+[31m-    if (*input != '}')[m
+[31m-    {[m
+[31m-        *error_pointer = input;[m
+[31m-        goto fail; /* expected end of object */[m
+[31m-    }[m
+[31m-[m
+[31m-success:[m
+[31m-    item->type = cJSON_Object;[m
+[31m-    item->child = head;[m
+[31m-[m
+[31m-    return input + 1;[m
+[31m-[m
+[31m-fail:[m
+[31m-    if (head != NULL)[m
+[31m-    {[m
+[31m-        cJSON_Delete(head);[m
+[31m-    }[m
+[31m-[m
+[31m-    return NULL;[m
+[31m-}[m
+[31m-[m
+[31m-/* Render an object to text. */[m
+[31m-static unsigned char *print_object(const cJSON *item, size_t depth, cjbool fmt, printbuffer *p)[m
+[31m-{[m
+[31m-    unsigned char **entries = NULL;[m
+[31m-    unsigned char **names = NULL;[m
+[31m-    unsigned char *out = NULL;[m
+[31m-    unsigned char *ptr = NULL;[m
+[31m-    unsigned char *ret = NULL;[m
+[31m-    unsigned char *str = NULL;[m
+[31m-    size_t len = 7;[m
+[31m-    size_t i = 0;[m
+[31m-    size_t j = 0;[m
+[31m-    cJSON *child = item->child;[m
+[31m-    size_t numentries = 0;[m
+[31m-    cjbool fail = false;[m
+[31m-    size_t tmplen = 0;[m
+[31m-[m
+[31m-    /* Count the number of entries. */[m
+[31m-    while (child)[m
+[31m-    {[m
+[31m-        numentries++;[m
+[31m-        child = child->next;[m
+[31m-    }[m
+[31m-[m
+[31m-    /* Explicitly handle empty object case */[m
+[31m-    if (!numentries)[m
+[31m-    {[m
+[31m-        if (p)[m
+[31m-        {[m
+[31m-            out = ensure(p, fmt ? depth + 4 : 3);[m
+[31m-        }[m
+[31m-        else[m
+[31m-        {[m
+[31m-            out = (unsigned char*)cJSON_malloc(fmt ? depth + 4 : 3);[m
+[31m-        }[m
+[31m-        if (!out)[m
+[31m-        {[m
+[31m-            return NULL;[m
+[31m-        }[m
+[31m-        ptr = out;[m
+[31m-        *ptr++ = '{';[m
+[31m-        if (fmt) {[m
+[31m-            *ptr++ = '\n';[m
+[31m-            for (i = 0; i < depth; i++)[m
+[31m-            {[m
+[31m-                *ptr++ = '\t';[m
+[31m-            }[m
+[31m-        }[m
+[31m-        *ptr++ = '}';[m
+[31m-        *ptr++ = '\0';[m
+[31m-[m
+[31m-        return out;[m
+[31m-    }[m
+[31m-[m
+[31m-    if (p)[m
+[31m-    {[m
+[31m-        /* Compose the output: */[m
+[31m-        i = p->offset;[m
+[31m-        len = fmt ? 2 : 1; /* fmt: {\n */[m
+[31m-        ptr = ensure(p, len + 1);[m
+[31m-        if (!ptr)[m
+[31m-        {[m
+[31m-            return NULL;[m
+[31m-        }[m
+[31m-[m
+[31m-        *ptr++ = '{';[m
+[31m-        if (fmt)[m
+[31m-        {[m
+[31m-            *ptr++ = '\n';[m
+[31m-        }[m
+[31m-        *ptr = '\0';[m
+[31m-        p->offset += len;[m
+[31m-[m
+[31m-        child = item->child;[m
+[31m-        depth++;[m
+[31m-        while (child)[m
+[31m-        {[m
+[31m-            if (fmt)[m
+[31m-            {[m
+[31m-                ptr = ensure(p, depth);[m
+[31m-                if (!ptr)[m
+[31m-                {[m
+[31m-                    return NULL;[m
+[31m-                }[m
+[31m-                for (j = 0; j < depth; j++)[m
+[31m-                {[m
+[31m-                    *ptr++ = '\t';[m
+[31m-                }[m
+[31m-                p->offset += depth;[m
+[31m-            }[m
+[31m-[m
+[31m-            /* print key */[m
+[31m-            if (!print_string_ptr((unsigned char*)child->string, p))[m
+[31m-            {[m
+[31m-                return NULL;[m
+[31m-            }[m
+[31m-            p->offset = update(p);[m
+[31m-[m
+[31m-            len = fmt ? 2 : 1;[m
+[31m-            ptr = ensure(p, len);[m
+[31m-            if (!ptr)[m
+[31m-            {[m
+[31m-                return NULL;[m
+[31m-            }[m
+[31m-            *ptr++ = ':';[m
+[31m-            if (fmt)[m
+[31m-            {[m
+[31m-                *ptr++ = '\t';[m
+[31m-            }[m
+[31m-            p->offset+=len;[m
+[31m-[m
+[31m-            /* print value */[m
+[31m-            if (!print_value(child, depth, fmt, p))[m
+[31m-            {[m
+[31m-                return NULL;[m
+[31m-            };[m
+[31m-            p->offset = update(p);[m
+[31m-[m
+[31m-            /* print comma if not last */[m
+[31m-            len = (size_t) (fmt ? 1 : 0) + (child->next ? 1 : 0);[m
+[31m-            ptr = ensure(p, len + 1);[m
+[31m-            if (!ptr)[m
+[31m-            {[m
+[31m-                return NULL;[m
+[31m-            }[m
+[31m-            if (child->next)[m
+[31m-            {[m
+[31m-                *ptr++ = ',';[m
+[31m-            }[m
+[31m-[m
+[31m-            if (fmt)[m
+[31m-            {[m
+[31m-                *ptr++ = '\n';[m
+[31m-            }[m
+[31m-            *ptr = '\0';[m
+[31m-            p->offset += len;[m
+[31m-[m
+[31m-            child = child->next;[m
+[31m-        }[m
+[31m-[m
+[31m-        ptr = ensure(p, fmt ? (depth + 1) : 2);[m
+[31m-        if (!ptr)[m
+[31m-        {[m
+[31m-            return NULL;[m
+[31m-        }[m
+[31m-        if (fmt)[m
+[31m-        {[m
+[31m-            for (i = 0; i < (depth - 1); i++)[m
+[31m-            {[m
+[31m-                *ptr++ = '\t';[m
+[31m-            }[m
+[31m-        }[m
+[31m-        *ptr++ = '}';[m
+[31m-        *ptr = '\0';[m
+[31m-        out = (p->buffer) + i;[m
+[31m-    }[m
+[31m-    else[m
+[31m-    {[m
+[31m-        /* Allocate space for the names and the objects */[m
+[31m-        entries = (unsigned char**)cJSON_malloc(numentries * sizeof(unsigned char*));[m
+[31m-        if (!entries)[m
+[31m-        {[m
+[31m-            return NULL;[m
+[31m-        }[m
+[31m-        names = (unsigned char**)cJSON_malloc(numentries * sizeof(unsigned char*));[m
+[31m-        if (!names)[m
+[31m-        {[m
+[31m-            cJSON_free(entries);[m
+[31m-            return NULL;[m
+[31m-        }[m
+[31m-        memset(entries, '\0', sizeof(unsigned char*) * numentries);[m
+[31m-        memset(names, '\0', sizeof(unsigned char*) * numentries);[m
+[31m-[m
+[31m-        /* Collect all the results into our arrays: */[m
+[31m-        child = item->child;[m
+[31m-        depth++;[m
+[31m-        if (fmt)[m
+[31m-        {[m
+[31m-            len += depth;[m
+[31m-        }[m
+[31m-        while (child && !fail)[m
+[31m-        {[m
+[31m-            names[i] = str = print_string_ptr((unsigned char*)child->string, 0); /* print key */[m
+[31m-            entries[i++] = ret = print_value(child, depth, fmt, 0);[m
+[31m-            if (str && ret)[m
+[31m-            {[m
+[31m-                len += strlen((char*)ret) + strlen((char*)str) + 2 + (fmt ? 2 + depth : 0);[m
+[31m-            }[m
+[31m-            else[m
+[31m-            {[m
+[31m-                fail = true;[m
+[31m-            }[m
+[31m-            child = child->next;[m
+[31m-        }[m
+[31m-[m
+[31m-        /* Try to allocate the output string */[m
+[31m-        if (!fail)[m
+[31m-        {[m
+[31m-            out = (unsigned char*)cJSON_malloc(len);[m
+[31m-        }[m
+[31m-        if (!out)[m
+[31m-        {[m
+[31m-            fail = true;[m
+[31m-        }[m
+[31m-[m
+[31m-        /* Handle failure */[m
+[31m-        if (fail)[m
+[31m-        {[m
+[31m-            /* free all the printed keys and values */[m
+[31m-            for (i = 0; i < numentries; i++)[m
+[31m-            {[m
+[31m-                if (names[i])[m
+[31m-                {[m
+[31m-                    cJSON_free(names[i]);[m
+[31m-                }[m
+[31m-                if (entries[i])[m
+[31m-                {[m
+[31m-                    cJSON_free(entries[i]);[m
+[31m-                }[m
+[31m-            }[m
+[31m-            cJSON_free(names);[m
+[31m-            cJSON_free(entries);[m
+[31m-            return NULL;[m
+[31m-        }[m
+[31m-[m
+[31m-        /* Compose the output: */[m
+[31m-        *out = '{';[m
+[31m-        ptr = out + 1;[m
+[31m-        if (fmt)[m
+[31m-        {[m
+[31m-            *ptr++ = '\n';[m
+[31m-        }[m
+[31m-        *ptr = '\0';[m
+[31m-        for (i = 0; i < numentries; i++)[m
+[31m-        {[m
+[31m-            if (fmt)[m
+[31m-            {[m
+[31m-                for (j = 0; j < depth; j++)[m
+[31m-                {[m
+[31m-                    *ptr++='\t';[m
+[31m-                }[m
+[31m-            }[m
+[31m-            tmplen = strlen((char*)names[i]);[m
+[31m-            memcpy(ptr, names[i], tmplen);[m
+[31m-            ptr += tmplen;[m
+[31m-            *ptr++ = ':';[m
+[31m-            if (fmt)[m
+[31m-            {[m
+[31m-                *ptr++ = '\t';[m
+[31m-            }[m
+[31m-            strcpy((char*)ptr, (char*)entries[i]);[m
+[31m-            ptr += strlen((char*)entries[i]);[m
+[31m-            if (i != (numentries - 1))[m
+[31m-            {[m
+[31m-                *ptr++ = ',';[m
+[31m-            }[m
+[31m-            if (fmt)[m
+[31m-            {[m
+[31m-                *ptr++ = '\n';[m
+[31m-            }[m
+[31m-            *ptr = '\0';[m
+[31m-            cJSON_free(names[i]);[m
+[31m-            cJSON_free(entries[i]);[m
+[31m-        }[m
+[31m-[m
+[31m-        cJSON_free(names);[m
+[31m-        cJSON_free(entries);[m
+[31m-        if (fmt)[m
+[31m-        {[m
+[31m-            for (i = 0; i < (depth - 1); i++)[m
+[31m-            {[m
+[31m-                *ptr++ = '\t';[m
+[31m-            }[m
+[31m-        }[m
+[31m-        *ptr++ = '}';[m
+[31m-        *ptr++ = '\0';[m
+[31m-    }[m
+[31m-[m
+[31m-    return out;[m
+[31m-}[m
+[31m-[m
+[31m-/* Get Array size/item / object item. */[m
+[31m-int cJSON_GetArraySize(const cJSON *array)[m
+[31m-{[m
+[31m-    cJSON *c = array->child;[m
+[31m-    size_t i = 0;[m
+[31m-    while(c)[m
+[31m-    {[m
+[31m-        i++;[m
+[31m-        c = c->next;[m
+[31m-    }[m
+[31m-[m
+[31m-    /* FIXME: Can overflow here. Cannot be fixed without breaking the API */[m
+[31m-[m
+[31m-    return (int)i;[m
+[31m-}[m
+[31m-[m
+[31m-cJSON *cJSON_GetArrayItem(const cJSON *array, int item)[m
+[31m-{[m
+[31m-    cJSON *c = array ? array->child : NULL;[m
+[31m-    while (c && item > 0)[m
+[31m-    {[m
+[31m-        item--;[m
+[31m-        c = c->next;[m
+[31m-    }[m
+[31m-[m
+[31m-    return c;[m
+[31m-}[m
+[31m-[m
+[31m-cJSON *cJSON_GetObjectItem(const cJSON *object, const char *string)[m
+[31m-{[m
+[31m-    cJSON *c = object ? object->child : NULL;[m
+[31m-    while (c && cJSON_strcasecmp((unsigned char*)c->string, (const unsigned char*)string))[m
+[31m-    {[m
+[31m-        c = c->next;[m
+[31m-    }[m
+[31m-    return c;[m
+[31m-}[m
+[31m-[m
+[31m-cjbool cJSON_HasObjectItem(const cJSON *object, const char *string)[m
+[31m-{[m
+[31m-    return cJSON_GetObjectItem(object, string) ? 1 : 0;[m
+[31m-}[m
+[31m-[m
+[31m-/* Utility for array list handling. */[m
+[31m-static void suffix_object(cJSON *prev, cJSON *item)[m
+[31m-{[m
+[31m-    prev->next = item;[m
+[31m-    item->prev = prev;[m
+[31m-}[m
+[31m-[m
+[31m-/* Utility for handling references. */[m
+[31m-static cJSON *create_reference(const cJSON *item)[m
+[31m-{[m
+[31m-    cJSON *ref = cJSON_New_Item();[m
+[31m-    if (!ref)[m
+[31m-    {[m
+[31m-        return NULL;[m
+[31m-    }[m
+[31m-    memcpy(ref, item, sizeof(cJSON));[m
+[31m-    ref->string = NULL;[m
+[31m-    ref->type |= cJSON_IsReference;[m
+[31m-    ref->next = ref->prev = NULL;[m
+[31m-    return ref;[m
+[31m-}[m
+[31m-[m
+[31m-/* Add item to array/object. */[m
+[31m-void cJSON_AddItemToArray(cJSON *array, cJSON *item)[m
+[31m-{[m
+[31m-    cJSON *child = NULL;[m
+[31m-[m
+[31m-    if ((item == NULL) || (array == NULL))[m
+[31m-    {[m
+[31m-        return;[m
+[31m-    }[m
+[31m-[m
+[31m-    child = array->child;[m
+[31m-[m
+[31m-    if (child == NULL)[m
+[31m-    {[m
+[31m-        /* list is empty, start new one */[m
+[31m-        array->child = item;[m
+[31m-    }[m
+[31m-    else[m
+[31m-    {[m
+[31m-        /* append to the end */[m
+[31m-        while (child->next)[m
+[31m-        {[m
+[31m-            child = child->next;[m
+[31m-        }[m
+[31m-        suffix_object(child, item);[m
+[31m-    }[m
+[31m-}[m
+[31m-[m
+[31m-void   cJSON_AddItemToObject(cJSON *object, const char *string, cJSON *item)[m
+[31m-{[m
+[
