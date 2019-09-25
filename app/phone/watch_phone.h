@@ -10,6 +10,7 @@
 #include <pthread.h>
 
 #include <cJSON.h>
+#include <at_server.h>
 
 #include "../../screen/screen.h"
 #include "../../screen/ink_screen_display.h"

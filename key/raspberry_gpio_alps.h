@@ -10,6 +10,9 @@
 
 #define CW (0)
 #define CCW (1)
+
+#define PIN_A	(16)
+#define PIN_B	(20)
 typedef void * (alps_func_callback_t)(void *p_parameter);
 
 enum alps_sys_reg_func_index {

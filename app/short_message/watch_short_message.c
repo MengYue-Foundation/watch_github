@@ -2,10 +2,29 @@
 
 watch_mesg_t stWatchMesg;
 
+extern int g_iNum;
 void * short_message_first_press_down(void *p_parameter)
 {
     printf("short_message_first_press_down\n");
 	enqueue_display(0 ,64 ,PART_REFRESH,"./pic/standby_mesg.bmp" , PRIORITY_1, PICTURE);
+	    printf("weather_short_press, para:%s\n", (char *)p_parameter);
+		
+	switch(g_iNum){
+	case 0:
+		enqueue_display(0 ,64 ,PART_REFRESH,"./pic/standby_mesg.bmp" , PRIORITY_4, PICTURE);
+		break;
+	case 1:
+		enqueue_display(0 ,64 ,PART_REFRESH,"./pic/standby_1_mesg.bmp" , PRIORITY_4, PICTURE);
+		break;
+	case 2:
+
+		break;
+	case 3:
+
+		break;
+	default:
+		break;
+	}
 }
 
 void * short_message_short_press(void *p_parameter)
@@ -35,9 +54,9 @@ void * short_message_long_press(void *p_parameter)
 		strncpy(stWatchMesg.cszMesg,stWatchAsr.cszVtoT,strlen(stWatchAsr.cszVtoT));
 		
 		charset_convert("UTF-8","GB2312",stWatchAsr.cszVtoT,strlen(stWatchAsr.cszVtoT),cszSpeakContent,256);
-		enqueue_display(0 ,64,PART_REFRESH,"./pic/standby_down.bmp" , PRIORITY_3, PICTURE);
-		enqueue_display(20 ,20,PART_REFRESH,cszSpeakContent, PRIORITY_3, TEXT_CHINESE);
-		enqueue_display(0 ,0 ,PART_REFRESH,"end" , PRIORITY_3, PICTURE);
+	
+		enqueue_display(20 ,20,PART_REFRESH,cszSpeakContent, PRIORITY_2, TEXT_CHINESE);
+
 		
 		stWatchMesg.iState = MESG_NAME;
 		printf("speak name!!!!\n");
@@ -56,7 +75,21 @@ void * short_message_long_press(void *p_parameter)
 
 
 void * short_message_up(void *p_parameter){
-	printf("1111111111111111111111\n");
-    enqueue_display(0 ,64 ,PART_REFRESH,"./pic/standby_down.bmp" , PRIORITY_1, PICTURE);
+	switch(g_iNum){
+	case 0:
+		enqueue_display(0 ,64,PART_REFRESH,"./pic/standby_down.bmp" , PRIORITY_4, PICTURE);
+		break;
+	case 1:
+		enqueue_display(0 ,64,PART_REFRESH,"./pic/rotate/standby_down_1.bmp" , PRIORITY_4, PICTURE);
+		break;
+	case 2:
+		enqueue_display(0 ,64,PART_REFRESH,"./pic/rotate/standby_down_2.bmp" , PRIORITY_4, PICTURE);
+		break;
+	case 3:
+		enqueue_display(0 ,64,PART_REFRESH,"./pic/rotate/standby_down_3.bmp" , PRIORITY_4, PICTURE);
+		break;
+	default:
+		break;
+	}
   return 0;
 }

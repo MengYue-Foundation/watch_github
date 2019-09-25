@@ -99,8 +99,8 @@ int alps_data_read()
     level_28_A_pre = level_28_A_cur;
     level_29_B_pre = level_29_B_cur;
     
-    level_28_A_cur = digitalRead(20);
-    level_29_B_cur = digitalRead(21);
+    level_28_A_cur = digitalRead(PIN_A);
+    level_29_B_cur = digitalRead(PIN_B);
 
     switch (iCurrent_state) {
     case IDLE:
@@ -202,7 +202,7 @@ void * alps_sensor_is_change_thread (void *p_arg)
             ialps_have_data = true;
         }
 
-#if 1        
+#if 0        
         iCounter_10ms++;
         if (10 == iCounter_10ms) {
             printf("iCurrent_state:%d, ialps_have_data:%d, iRotate_counter:%d\n", iCurrent_state, ialps_have_data, iRotate_counter);
@@ -269,8 +269,8 @@ int alps_rotate_module_init()
     pthread_t tid_detect_key_is_change;
     pthread_t tid_handle_key_data;
     
-    pinMode(20, INPUT);
-    pinMode(21, INPUT);
+    pinMode(PIN_A, INPUT);
+    pinMode(PIN_B, INPUT);
 #if 0
     key_data_need_transfer_t st_Key_data_need_transfer;//多定义了一个数组
     memset(&st_Key_data_need_transfer, 0, sizeof(st_Key_data_need_transfer));

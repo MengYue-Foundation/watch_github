@@ -11,6 +11,8 @@ static int iLarkState;
 
 extern int g_iWhich_screen;
 
+extern int g_iNum;
+
 char cszMeaasge_show[256];
 static void * key0_first_press_down(void *p_parameter){
 	printf("*******123\n");
@@ -31,7 +33,7 @@ static void * key0_long_press(void *p_parameter){
 	asr_server(&stWatchAsr);
 	
 	strncpy(g_stMessage_buf.cszMessage,stWatchAsr.cszVtoT,strlen(stWatchAsr.cszVtoT));
-	strncpy(g_stMessage_buf.cszName,"楂樹篃",strlen("楂樹篃"));
+	strncpy(g_stMessage_buf.cszName,"高也",strlen("高也"));
 	
 	strncpy(cszMeaasge_show,stWatchAsr.cszVtoT,strlen(stWatchAsr.cszVtoT));
 	g_stMessage_buf.iState = 1;
@@ -94,13 +96,12 @@ static void * key2_up(void *p_parameter){
 
 static void * key3_first_press_down(void *p_parameter){
 	printf("****%s,%s\n",__FILE__,__FUNCTION__);
-	enqueue_display(0 ,64 ,PART_REFRESH,"./pic/Lark/lark_return.bmp" , PRIORITY_4, PICTURE);
+	enqueue_display(0 ,0 ,PART_REFRESH,"./pic/Lark/lark_return.bmp" , PRIORITY_4, PICTURE);
 
 }
 
 static void * key3_short_press(void *p_parameter){
 
-	
 	pthread_mutex_lock(&stMutex_key_init);
 	pthread_cond_signal(&stCond_key_init); 
 	pthread_mutex_unlock(&stMutex_key_init);
@@ -148,7 +149,23 @@ int key_lark_init(void){
 void * lark_first_press_down(void *p_parameter)
 {
 	printf("****%s,%s\n",__FILE__,__FUNCTION__);
-	enqueue_display(0 ,64 ,PART_REFRESH,"./pic/standby_mesg.bmp" , PRIORITY_4, PICTURE);
+
+	
+	switch(g_iNum){
+	case 0:
+		break;
+	case 1:
+		enqueue_display(0 ,64 ,PART_REFRESH,"./pic/standby_1_lark.bmp" , PRIORITY_4, PICTURE);
+		break;
+	case 2:
+		enqueue_display(0 ,64 ,PART_REFRESH,"./pic/standby_2_lark.bmp" , PRIORITY_4, PICTURE);
+		break;
+	case 3:
+		enqueue_display(0 ,64 ,PART_REFRESH,"./pq" , PRIORITY_4, PICTURE);
+		break;
+	default:
+		break;
+	}
 
 }
 
@@ -181,10 +198,9 @@ void * lark_long_press(void *p_parameter)
 		strncpy(g_stMessage_buf.cszMessage,stWatchAsr.cszVtoT,strlen(stWatchAsr.cszVtoT));
 		
 		charset_convert("UTF-8","GB2312",stWatchAsr.cszVtoT,strlen(stWatchAsr.cszVtoT),cszSpeakContent,256);
-		enqueue_display(0 ,64,PART_REFRESH,"./pic/standby_down.bmp" , PRIORITY_3, PICTURE);
-		enqueue_display(20 ,15,PART_REFRESH,"发送内容", PRIORITY_3, TEXT_CHINESE);
-		enqueue_display(20 ,40,PART_REFRESH,cszSpeakContent, PRIORITY_3, TEXT_CHINESE);
-		enqueue_display(0 ,0 ,PART_REFRESH,"end" , PRIORITY_3, PICTURE);
+		enqueue_display(20 ,15,PART_REFRESH,"发送内容", PRIORITY_2, TEXT_CHINESE);
+		enqueue_display(20 ,40,PART_REFRESH,cszSpeakContent, PRIORITY_2, TEXT_CHINESE);
+
 		iLarkState = 1;
 	}else{
 		char cszName[40] = {0};
@@ -196,10 +212,10 @@ void * lark_long_press(void *p_parameter)
 		pthread_mutex_unlock(&stMutex);
 		
 		charset_convert("UTF-8","GB2312",stWatchAsr.cszVtoT,strlen(stWatchAsr.cszVtoT),cszName,40);
-		enqueue_display(0 ,64,PART_REFRESH,"./pic/standby_down.bmp" , PRIORITY_3, PICTURE);
-		enqueue_display(20 ,15,PART_REFRESH,"消息发送至", PRIORITY_3, TEXT_CHINESE);
-		enqueue_display(20 ,40,PART_REFRESH,cszName, PRIORITY_3, TEXT_CHINESE);
-		enqueue_display(0 ,0 ,PART_REFRESH,"end" , PRIORITY_3, PICTURE);
+
+		enqueue_display(20 ,15,PART_REFRESH,"消息发送至", PRIORITY_2, TEXT_CHINESE);
+		enqueue_display(20 ,40,PART_REFRESH,cszName, PRIORITY_2, TEXT_CHINESE);
+
 		printf("speak content!!!!\n");
 		iLarkState = 0;
 	}
@@ -209,7 +225,21 @@ void * lark_long_press(void *p_parameter)
 void * lark_up(void *p_parameter)
 {
     printf("****%s,%s\n",__FILE__,__FUNCTION__);
-	enqueue_display(0 ,64 ,PART_REFRESH,"./pic/standby_down.bmp" , PRIORITY_4, PICTURE);
+	switch(g_iNum){
+	case 0:
+		break;
+	case 1:
+		enqueue_display(0 ,64,PART_REFRESH,"./pic/rotate/standby_down_1.bmp" , PRIORITY_4, PICTURE);
+		break;
+	case 2:
+		enqueue_display(0 ,64,PART_REFRESH,"./pic/rotate/standby_down_2.bmp" , PRIORITY_4, PICTURE);
+		break;
+	case 3:
+		enqueue_display(0 ,64,PART_REFRESH,"./pic/rotate/standby_down_3.bmp" , PRIORITY_4, PICTURE);
+		break;
+	default:
+		break;
+	}
 }
 
 

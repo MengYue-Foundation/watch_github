@@ -170,10 +170,9 @@ void *client_rece(void *pvArgs){
 			charset_convert("UTF-8","GB2312",cszPrint,strlen(cszPrint),cszName_GB,40);
 			charset_convert("UTF-8","GB2312",cszMessage,strlen(cszMessage),cszMessage_GB,512);
 			
-			enqueue_display(20, 15 ,PART_REFRESH,cszName_GB, PRIORITY_3, TEXT_CHINESE);
-			enqueue_display(20, 40 ,PART_REFRESH,cszMessage_GB, PRIORITY_3, TEXT_CHINESE);
-			enqueue_display(0 ,64,PART_REFRESH,"./pic/standby_down.bmp" , PRIORITY_3, PICTURE);
-			enqueue_display(20, 30 ,PART_REFRESH,"end", PRIORITY_3, TEXT_CHINESE);
+			enqueue_display(20, 15 ,PART_REFRESH,cszName_GB, PRIORITY_2, TEXT_CHINESE);
+			enqueue_display(20, 40 ,PART_REFRESH,cszMessage_GB, PRIORITY_2, TEXT_CHINESE);
+
 			
 			printf("****%s,%s,%s:%s\n",__FILE__,__FUNCTION__,cszName,cszMessage);
 			

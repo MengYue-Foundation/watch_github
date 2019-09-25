@@ -119,7 +119,9 @@ int key_remind_init(void){
 
 
 
-void * remind_first_press_down(void *p_parameter){}
+void * remind_first_press_down(void *p_parameter){
+	
+}
 void * remind_short_press(void *p_parameter){
 	printf("****%s,%s\n",__FILE__,__FUNCTION__);
 	int iI = 0;

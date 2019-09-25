@@ -1,0 +1,1 @@
+obj-y += six_axis.o 

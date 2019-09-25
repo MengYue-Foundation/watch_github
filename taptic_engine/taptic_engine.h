@@ -5,7 +5,7 @@
 
 #define PER_INC_TIME_NS     (10*1000*1000)
 
-#define VIBRATE_PIN	(26)
+#define VIBRATE_PIN	(21)
 
 #define TAPTIC_ENGINE_PIN	(26)
 #define LENGTH 	(5)

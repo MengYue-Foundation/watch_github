@@ -152,7 +152,7 @@ int struct_cjson(char *pcPut,int iSize,char *pcCjson){
     cJSON_AddNumberToObject(stUploadJson,"rate",RATE);
     cJSON_AddNumberToObject(stUploadJson,"dev_pid",1536);
     cJSON_AddNumberToObject(stUploadJson,"channel",1);
-    cJSON_AddStringToObject(stUploadJson,"token","24.81a846e99f4fef23ad80bbc4210d8cd2.2592000.1568796408.282335-15249541");
+    cJSON_AddStringToObject(stUploadJson,"token","24.fad93e86065844d635f8a1bdb9f09dbb.2592000.1570527499.282335-15249541");
     //curl -i -k 'https://aip.baidubce.com/oauth/2.0/token?grant_type=client_credentials&client_id=MapvabAqXweRy9TOAENSCCXC&client_secret=hSmQMZqVCYht6NSVYbgqdfLyOCYGG1u8'
     cJSON_AddStringToObject(stUploadJson,"cuid","baidu_workshop");
     //cJSON_AddNumberToObject(stUploadJson,"cuid",12345678);

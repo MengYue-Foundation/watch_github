@@ -19,6 +19,8 @@
 #include "EPD_2in13.h"
 #include "ink_screen_display.h"
 #include <sys/mman.h>
+#include <stdio.h>
+#include <unistd.h>
 
 pthread_mutex_t  queue1_data_mutex = PTHREAD_MUTEX_INITIALIZER;
 pthread_mutex_t  queue2_data_mutex = PTHREAD_MUTEX_INITIALIZER;
@@ -355,7 +357,7 @@ int enqueue_display(int iX, int iY, int iRefresh_mode, char *path_or_text,  int 
 				iRet = -1;
 				printf("iPriority:%d failed\n", iPriority);
 			}
-			//printf("queue4WWWWWWWWWWWWWWWiWrite_index:%d, iTotal_num:%d, i:%d\n", queue4.iWrite_index, queue4.iTotal_num, i);
+			printf("queue4WWWWWWWWWWWWWWWiWrite_index:%d, iTotal_num:%d, i:%d\n", queue4.iWrite_index, queue4.iTotal_num, i);
 			pthread_mutex_unlock(&queue4_data_mutex);
 			break;
 			
@@ -375,7 +377,7 @@ static int ink_display_interface(int iWhich_priority, display_info_t *p_display_
 	static int iMax_clear_num_string = 0;
 	int iCur_Refresh_mode = p_display_info[0].iRefresh_Mode;
 
-printf("enter: iRefresh_Mode:%d, p_display_info[0].szPath_text:%s\n", iCur_Refresh_mode, p_display_info[0].szPath_text);
+printf("enter: iRefresh_Mode:%d, p_display_info[0].szPath_text:%s, iWhich_priority:%d\n", iCur_Refresh_mode, p_display_info[0].szPath_text, iWhich_priority);
 	//一次都没有执行刷新的话，直接刷新不需要判断是不是和前面一次的刷新有什么不一样
 	if (true) {//说明不是第一次做这个刷新的事情了
 		if (iPre_Refresh_mode != iCur_Refresh_mode) { //说明两次的刷新模式不一样了才需要进行更换刷新模式
@@ -414,6 +416,12 @@ printf("enter: iRefresh_Mode:%d, p_display_info[0].szPath_text:%s\n", iCur_Refre
 			if (TEXT_ENGLISH == iContent) {
 				Paint_DrawString_EN(iX , iY, p_text_path, &Font16, WHITE, BLACK);
 			} else if (PICTURE == iContent) {
+			
+			if(access(p_text_path, F_OK) != 0) {
+				printf("access failed!\n");
+				return 0;
+			}  
+			
 				GUI_ReadBmpBySgy(p_text_path, iX, iY);
 			} else if (TEXT_CHINESE == iContent) {				
 				Paint_DrawString_CN_by_sgy(iX , iY, p_text_path, &Font16CN, WHITE, BLACK);
@@ -435,7 +443,12 @@ printf("enter: iRefresh_Mode:%d, p_display_info[0].szPath_text:%s\n", iCur_Refre
 					//printf("english\n");					
 					Paint_DrawString_EN(iX , iY, p_text_path, &Font16, WHITE, BLACK);
 				} else if (PICTURE == iContent) {
-					//printf("picture\n");					
+					//printf("picture\n");
+					
+					if(access(p_text_path, F_OK) != 0) {
+						printf("access failed!\n");
+						return 0;
+					}  
 					GUI_ReadBmpBySgy(p_text_path, iX, iY);
 				} else if (TEXT_CHINESE == iContent) {
 					//printf("chinese\n");					
@@ -462,9 +475,14 @@ printf("enter: iRefresh_Mode:%d, p_display_info[0].szPath_text:%s\n", iCur_Refre
 				Paint_ClearWindows(iX, iY, iX+12*iNumString, iY+16, WHITE);
 				Paint_DrawString_EN(iX , iY, p_text_path, &Font16, WHITE, BLACK);
 			} else if (PICTURE == iContent) {
+			
+			if(access(p_text_path, F_OK) != 0) {
+				printf("access failed!\n");
+				return 0;
+			}  
 				GUI_ReadBmpBySgy(p_text_path, iX, iY);
 			} else if (TEXT_CHINESE == iContent) {
-				Paint_ClearWindows(iX, iY, iX+iMax_clear_num_string*8, iY+iMax_clear_num_string*8, WHITE);
+				Paint_ClearWindows(iX, iY, iX+iMax_clear_num_string*8, iY+16, WHITE);
 				Paint_DrawString_CN_by_sgy(iX , iY, p_text_path, &Font16CN, WHITE, BLACK);
 			}
 		}
@@ -480,7 +498,7 @@ printf("enter: iRefresh_Mode:%d, p_display_info[0].szPath_text:%s\n", iCur_Refre
 	} else if (PART_REFRESH == iCur_Refresh_mode) {
         EPD_2IN13_V2_DisplayPart(BlackImage);
 	}
-	
+	printf("ink_display_interface end!!!!!!!!\n");
 	return 0;
 }
 

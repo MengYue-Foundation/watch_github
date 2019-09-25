@@ -15,7 +15,8 @@ export AS LD CC CPP AR NM
 export STRIP OBJCOPY OBJDUMP
 
 CFLAGS := -Wall -O2 -ggdb3
-CFLAGS += -I $(shell pwd)/include  -I $(shell pwd)/screen -I $(shell pwd)/Fonts  -I $(shell pwd)/key/ -I $(shell pwd)/time -I $(shell pwd)/watch -I $(shell pwd)/common -I $(shell pwd)/ATserial -I$(shell pwd)/taptic_engine
+CFLAGS += -I $(shell pwd)/include  -I $(shell pwd)/screen -I $(shell pwd)/Fonts  -I $(shell pwd)/key/ -I $(shell pwd)/time -I $(shell pwd)/watch \
+-I $(shell pwd)/common -I $(shell pwd)/ATserial -I$(shell pwd)/taptic_engine -I $(shell pwd)/at_server -I $(shell pwd)/six_axis
 
 LDFLAGS := -lm -lwiringPi -lpthread -lcurl -lcrypto
 
@@ -38,6 +39,8 @@ obj-y += watch/
 obj-y += ATserial/
 obj-y += voice/
 obj-y += app/
+obj-y += at_server/
+obj-y += six_axis/
 obj-y += main.o
 
 

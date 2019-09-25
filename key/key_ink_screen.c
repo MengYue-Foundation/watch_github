@@ -57,44 +57,94 @@ int which_key_press(int iFd, key_read_i2c_data_t *key_read_i2c_data)
     read(iFd, szBuf, 2);
     iData = (szBuf[1] << 8) | (szBuf[0]);
     //printf("buf[0]:0x%x, buf[1]:0x%x, iData:0x%x\n", szBuf[0], szBuf[1], iData);
-    int per = 0;
+	int per = 0;
+#ifdef NORMAL_KEY
+
 	//这个地方记得要改回来
 	iData &= 0xffff;
-	//iData &= 0x00ff;
+#else
 
+	iData &= 0x00ff;
+#endif
+	if (iData == 0x08)
+		return 0;
     iPrev_status = iNow_status;
     iNow_status = 0x0;
 	switch(iData)
 	{	
-		case 0x0001:printf("KEY7 PRESS\r\n");break;
-		case 0x0002:printf("KEY6 PRESS\r\n");break;
-		case 0x0004:printf("KEY5 PRESS\r\n");break;
-		case 0x0008:printf("KEY4 PRESS\r\n");break;
-		case 0x0010:
+		case 0x0001:printf("KEY7 PRESS\r\n");
+#ifdef 	NORMAL_KEY
+#else
+		key_index = KEY1;
+
+		iNow_status |= (0x1 << key_index);
+		iKey_status = DOWN;
+#endif
+			break;
+		case 0x0002:printf("KEY6 PRESS\r\n");
+#ifdef 	NORMAL_KEY
+#else
+				key_index = KEY2;
+		
+				iNow_status |= (0x1 << key_index);
+				iKey_status = DOWN;
+#endif
+			break;
+		case 0x0004:printf("KEY5 PRESS\r\n");
+#ifdef 	NORMAL_KEY
+#else
+				key_index = KEY3;
+		
+				iNow_status |= (0x1 << key_index);
+				iKey_status = DOWN;
+#endif
+
+			break;
+		case 0x0008:printf("KEY4 PRESS\r\n");
+			break;
+		case 0x0010:			
             printf("KEY3 PRESS\r\n");
+#ifdef 	NORMAL_KEY		
             key_index = KEY3;
             iNow_status |= (0x1 << key_index);
             iKey_status = DOWN;
-            break;
+#else
+            key_index = KEY0;
+            iNow_status |= (0x1 << key_index);
+            iKey_status = DOWN;
+#endif
+			break;
 		case 0x0020:
             printf("KEY2 PRESS\r\n");
+#ifdef NORMAL_KEY
             key_index = KEY2; 
             iNow_status |= (0x1 << key_index);
             iKey_status = DOWN;
+#else
+			key_index = KEY1;
+			iNow_status |= (0x1 << key_index);
+			iKey_status = DOWN;
+#endif
         break;
 		case 0x0040:
             printf("KEY1 PRESS\r\n");
-            key_index = KEY1;
+#ifdef NORMAL_KEY
+#else
+            key_index = KEY3;
         
             iNow_status |= (0x1 << key_index);
             iKey_status = DOWN;
+#endif
             break;
 		case 0x0080:
             printf("KEY0 PRESS\r\n");
-            key_index = KEY0;
+#ifdef NORMAL_KEY
+#else
+			key_index = KEY2;
         
             iNow_status |= (0x1 << key_index);
             iKey_status = DOWN;
+#endif
             break;
 		case 0x0100:per=100;printf("100%%\r\n");break;
         case 0x0300:per=93;printf("93%%\r\n");break;

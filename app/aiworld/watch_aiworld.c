@@ -4,6 +4,7 @@
 extern pthread_cond_t stCond_key_init;
 extern pthread_mutex_t stMutex_key_init;
 extern int g_iWhich_screen;
+extern int g_iNum;
 
 void * key30_first_press_down(void *p_parameter){
 	enqueue_display(0 ,0 ,PART_REFRESH,"./pic/AI_world/AI_food.bmp" , PRIORITY_4, PICTURE);
@@ -51,10 +52,6 @@ void * key32_short_press(void *p_parameter){
 	pthread_mutex_lock(&stMutex_key_init);
 	pthread_cond_signal(&stCond_key_init); 
 	pthread_mutex_unlock(&stMutex_key_init);
-	
-	enqueue_display(0 ,0 ,PART_REFRESH,"./pic/dack.bmp" , PRIORITY_4, PICTURE);
-	enqueue_display(0 ,0 ,PART_REFRESH,"./pic/white.bmp" , PRIORITY_4, PICTURE);
-	enqueue_display(0 ,64,PART_REFRESH,"./pic/standby_down.bmp" , PRIORITY_4, PICTURE);
 
 	
 }
@@ -117,8 +114,24 @@ int aiworld_second(void){
 void * aiworld_first_press_down(void *p_parameter)
 {
     printf("aiworld_first_press_down\n");
-	enqueue_display(0 ,64 ,PART_REFRESH,"./pic/standby_AI.bmp" , PRIORITY_1, 
-PICTURE);
+	
+	
+	switch(g_iNum){
+	case 0:
+		enqueue_display(0 ,64 ,PART_REFRESH,"./pic/standby_AI.bmp" , PRIORITY_1, PICTURE);
+		break;
+	case 1:
+		enqueue_display(0 ,64 ,PART_REFRESH,"./pic/standby_1_AI.bmp" , PRIORITY_1, PICTURE);
+		break;
+	case 2:
+		enqueue_display(0 ,64 ,PART_REFRESH,"./pic/standby_2_AI.bmp" , PRIORITY_1, PICTURE);
+		break;
+	case 3:
+		enqueue_display(0 ,64 ,PART_REFRESH,"./pic/standby_3_AI.bmp" , PRIORITY_1, PICTURE);
+		break;
+	default:
+		break;
+	}
 }
 
 
@@ -167,7 +180,22 @@ PICTURE);
 void * aiworld_up(void *p_parameter)
 {
     printf("aiworld_up\n");
-	enqueue_display(0 ,64 ,PART_REFRESH,"./pic/standby_down.bmp" , PRIORITY_1, 
-PICTURE);
+	
+	switch(g_iNum){
+	case 0:
+		enqueue_display(0 ,64 ,PART_REFRESH,"./pic/standby_down.bmp" , PRIORITY_1, PICTURE);
+		break;
+	case 1:
+		enqueue_display(0 ,64,PART_REFRESH,"./pic/rotate/standby_down_1.bmp" , PRIORITY_4, PICTURE);
+		break;
+	case 2:
+		enqueue_display(0 ,64,PART_REFRESH,"./pic/rotate/standby_down_2.bmp" , PRIORITY_4, PICTURE);
+		break;
+	case 3:
+		enqueue_display(0 ,64,PART_REFRESH,"./pic/rotate/standby_down_3.bmp" , PRIORITY_4, PICTURE);
+		break;
+	default:
+		break;
+	}
 
 }

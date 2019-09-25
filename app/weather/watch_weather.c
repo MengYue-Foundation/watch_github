@@ -1,14 +1,32 @@
 #include "watch_weather.h"
 
+extern int g_iNum;
 void * weather_first_press_down(void *p_parameter)
 {
-    printf("weather_first_press_down\n");
-	enqueue_display(0 ,64 ,PART_REFRESH,"./pic/standby_home.bmp" , PRIORITY_1, PICTURE);
+    printf("weather_short_press, para:%s\n", (char *)p_parameter);
+		
+	switch(g_iNum){
+	case 0:
+		enqueue_display(0 ,64 ,PART_REFRESH,"./pic/standby_home.bmp" , PRIORITY_4, PICTURE);
+		break;
+	case 1:
+		enqueue_display(0 ,64 ,PART_REFRESH,"./pic/standby_1_home.bmp" , PRIORITY_4, PICTURE);
+		break;
+	case 2:
+		enqueue_display(0 ,64 ,PART_REFRESH,"./pic/standby_2_home.bmp" , PRIORITY_4, PICTURE);
+		break;
+	case 3:
+		enqueue_display(0 ,64 ,PART_REFRESH,"./pic/standby_3_home.bmp" , PRIORITY_4, PICTURE);
+		break;
+	default:
+		break;
+	}
 }
 
 void * weather_short_press(void *p_parameter)
 {
-    printf("weather_short_press, para:%s\n", (char *)p_parameter);
+
+
 }
 
 static int show_weather(char * pcWeather,char *pcCity1,char *pcCity2,char *pcTem){
@@ -104,6 +122,21 @@ void * weather_long_press(void *p_parameter)
 
 void * weather_up(void *p_parameter){
 	printf("weather_up\n");
-    enqueue_display(0 ,64 ,PART_REFRESH,"./pic/standby_down.bmp" , PRIORITY_1, PICTURE);
+	switch(g_iNum){
+	case 0:
+		enqueue_display(0 ,64,PART_REFRESH,"./pic/standby_down.bmp" , PRIORITY_4, PICTURE);
+		break;
+	case 1:
+		enqueue_display(0 ,64,PART_REFRESH,"./pic/rotate/standby_down_1.bmp" , PRIORITY_4, PICTURE);
+		break;
+	case 2:
+		enqueue_display(0 ,64,PART_REFRESH,"./pic/rotate/standby_down_2.bmp" , PRIORITY_4, PICTURE);
+		break;
+	case 3:
+		enqueue_display(0 ,64,PART_REFRESH,"./pic/rotate/standby_down_3.bmp" , PRIORITY_4, PICTURE);
+		break;
+	default:
+		break;
+	}
   return 0;
 }
